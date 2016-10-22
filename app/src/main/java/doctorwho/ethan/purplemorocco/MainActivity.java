@@ -93,12 +93,6 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        ProgressDialog dialog=new ProgressDialog(context);
-        dialog.setMessage("Loading...");
-        dialog.setCancelable(false);
-        dialog.setInverseBackgroundForced(false);
-        dialog.show();
-
         ParticleDeviceSetupLibrary.init(this.getApplicationContext(), MainActivity.class);
 
         super.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
@@ -109,6 +103,13 @@ public class MainActivity extends AppCompatActivity {
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        ProgressDialog dialog=new ProgressDialog(context);
+        dialog.setMessage("Loading...");
+        dialog.setCancelable(false);
+        dialog.setInverseBackgroundForced(false);
+        dialog.show();
+
 
         boards.add("Please select a board");
         newTasks.add("Please select a task");
