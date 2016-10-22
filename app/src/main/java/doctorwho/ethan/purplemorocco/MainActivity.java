@@ -471,7 +471,9 @@ public class MainActivity extends AppCompatActivity {
             TextView t = (TextView)findViewById(R.id.selection);
             t.setText(address);
 
-            coordinates = name.toString();
+            final LatLng coords = place.getLatLng();
+            coordinates = String.valueOf(coords.latitude) + " " + String.valueOf(coords.longitude);
+            Toaster.s(MainActivity.this, coordinates);
 
             //t.setText(address);
             //mAddress.setText(address);
