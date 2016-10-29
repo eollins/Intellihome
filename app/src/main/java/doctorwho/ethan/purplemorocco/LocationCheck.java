@@ -6,6 +6,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.location.Location;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.provider.SyncStateContract;
@@ -23,14 +24,23 @@ import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingRequest;
 import com.google.android.gms.location.LocationServices;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 
 
 public class LocationCheck extends Service implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
-    private final Context context = this;
-
     GoogleApiClient googleApiClient = null;
+
+    List<Geofence> geofences = new ArrayList<>();
+    List<GeofencingRequest> requests = new ArrayList<>();
 
     int id = 0;
 
@@ -40,9 +50,93 @@ public class LocationCheck extends Service implements GoogleApiClient.Connection
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         //TODO do something useful
-
         Log.d("e", "e");
-        googleApiClient = new GoogleApiClient.Builder(context)
+
+        File file = new File("/data/data/doctorwho.ethan.purplemorocco/files", "Locations.txt");
+
+        int length = (int) file.length();
+
+        byte[] bytes = new byte[length];
+
+        FileInputStream in = null;
+        try {
+            in = new FileInputStream(file);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        try {
+            in.read(bytes);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                in.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        String contents = new String(bytes);
+        List<String> data = Arrays.asList(contents.split("~"));
+        Log.e("", "");
+
+        for (String location : data) {
+            if (location == "") { break; }
+            List<String> components = Arrays.asList(location.split("`"));
+            Log.e("", "");
+
+            final Geofence geofence = new Geofence.Builder()
+                    .setRequestId(Integer.toString(id) + "-" + components.get(1) + "-" + components.get(2))
+                    .setCircularRegion(Double.parseDouble(components.get(3)), Double.parseDouble(components.get(4)), 100)
+                    .setExpirationDuration(Geofence.NEVER_EXPIRE)
+                    .setNotificationResponsiveness(1000)
+                    .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER)
+                    .build();
+
+            final GeofencingRequest geofenceRequest = new GeofencingRequest.Builder()
+                    .setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER)
+                    .addGeofence(geofence).build();
+
+            Intent i = new Intent(LocationCheck.this, GeofenceService.class);
+            Log.e("", "");
+            PendingIntent pendingIntent = PendingIntent.getService(LocationCheck.this, 0, i, PendingIntent.FLAG_UPDATE_CURRENT);
+
+            //googleApiClient.connect();
+            if (!googleApiClient.isConnected()) {
+                Log.i("Service", "GoogleApiClient is not connected");
+            } else {
+                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) { }
+                LocationServices.GeofencingApi.addGeofences(googleApiClient, geofenceRequest, pendingIntent)
+                        .setResultCallback(new ResultCallback<Status>() {
+                            @Override
+                            public void onResult(@NonNull Status status) {
+                                if (status.isSuccess()) {
+                                    Log.i("Service", "Added geofence");
+                                    geofences.add(geofence);
+                                    requests.add(geofenceRequest);
+                                } else {
+                                    Log.i("Service", "Geofence failed");
+                                }
+                            }
+                        });
+            }
+        }
+
+//        intent = new Intent(this,GeofenceService.class);
+//        this.startService(intent);
+
+        return Service.START_STICKY;
+    }
+
+    @Override
+    public IBinder onBind(Intent intent) {
+        // TODO: Return the communication channel to the service.
+        throw new UnsupportedOperationException("Not yet implemented");
+    }
+
+    @Override
+    public void onCreate(){
+        googleApiClient = new GoogleApiClient.Builder(LocationCheck.this)
                 .addApi(LocationServices.API)
                 .addConnectionCallbacks(new GoogleApiClient.ConnectionCallbacks() {
                     @Override
@@ -65,20 +159,7 @@ public class LocationCheck extends Service implements GoogleApiClient.Connection
 
         googleApiClient.connect();
 
-        Intent intent2 = new Intent(this,GeofenceService.class);
-        this.startService(intent2);
-
-        return Service.START_STICKY;
-    }
-
-    @Override
-    public IBinder onBind(Intent intent) {
-        // TODO: Return the communication channel to the service.
-        throw new UnsupportedOperationException("Not yet implemented");
-    }
-
-    public void onCreate() {
-        Log.e("", "onCreate");
+        Log.e("", "");
     }
 
     public void addGeofence(double longitude, double latitude, String boardName, String taskName) {
@@ -95,8 +176,9 @@ public class LocationCheck extends Service implements GoogleApiClient.Connection
                 .setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER)
                 .addGeofence(geofence).build();
 
-        Intent intent = new Intent(context, GeofenceService.class);
-        PendingIntent pendingIntent = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        Intent intent = new Intent(LocationCheck.this, GeofenceService.class);
+        Log.e("", "");
+        PendingIntent pendingIntent = PendingIntent.getService(LocationCheck.this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         if (!googleApiClient.isConnected()) {
             Toast.makeText(this, "GoogleApiClient is not connected", Toast.LENGTH_SHORT).show();
@@ -110,9 +192,9 @@ public class LocationCheck extends Service implements GoogleApiClient.Connection
                         @Override
                         public void onResult(@NonNull Status status) {
                             if (status.isSuccess()) {
-                                Toast.makeText(context, "Added geofence", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(LocationCheck.this, "Added geofence", Toast.LENGTH_SHORT).show();
                             } else {
-                                Toast.makeText(context, "Geofence failed", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(LocationCheck.this, "Geofence failed", Toast.LENGTH_SHORT).show();
                             }
                         }
                     });
@@ -123,8 +205,8 @@ public class LocationCheck extends Service implements GoogleApiClient.Connection
 
     @Override
     public void onDestroy() {
-        super.onDestroy();
         googleApiClient.disconnect();
+        super.onDestroy();
     }
 
     @Override

@@ -56,6 +56,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
@@ -370,19 +371,41 @@ public class MainActivity extends AppCompatActivity {
             String lon = coords[0];
             String lat = coords[1];
 
-            String latDeg = lat.substring(0, lat.indexOf('°'));
-            String latMin = lat.substring(lat.indexOf('°') + 1, lat.indexOf('\''));
-            String latSec = lat.substring(lat.indexOf('\'') + 1, lat.indexOf('"'));
+            try {
+                File file = new File("/data/data/doctorwho.ethan.purplemorocco/files", "Locations.txt");
 
-            String lonDeg = lon.substring(0, lon.indexOf('°'));
-            String lonMin = lon.substring(lon.indexOf('°') + 1, lon.indexOf('\''));
-            String lonSec = lon.substring(lon.indexOf('\'') + 1, lon.indexOf('"'));
+                int length = (int) file.length();
 
-            double finalLatitude = Double.parseDouble(latDeg) + (Double.parseDouble(latMin) / 60) + (Double.parseDouble(latSec) / 3600);
-            double finalLongitude = Double.parseDouble(lonDeg) + (Double.parseDouble(lonMin) / 60) + (Double.parseDouble(lonSec) / 3600);
+                byte[] bytes = new byte[length];
 
-            LocationCheck loc = new LocationCheck();
-            loc.addGeofence(finalLongitude, finalLatitude, boardSpinner.getSelectedItem().toString(), taskSpinner.getSelectedItem().toString());
+                FileInputStream in = new FileInputStream(file);
+                try {
+                    in.read(bytes);
+                } finally {
+                    in.close();
+                }
+
+                String contents = new String(bytes);
+                List<String> locations = Arrays.asList(contents.split("~"));
+                int id = locations.size();
+
+                String dataToStore = Integer.toString(id + 1) + "`" + boardSpinner.getSelectedItem().toString() + "`" + taskSpinner.getSelectedItem().toString() + "`" + lon + "`" + lat + "~";
+
+                FileOutputStream stream = new FileOutputStream(file);
+                try {
+                    stream.write((contents + dataToStore).getBytes());
+                } finally {
+                    stream.close();
+                }
+
+//                stopService(new Intent(this, LocationCheck.class));
+                startService(new Intent(this, LocationCheck.class));
+
+                id++;
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
         sendTask send = new sendTask();
