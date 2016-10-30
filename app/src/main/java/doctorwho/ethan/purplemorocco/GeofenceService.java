@@ -20,6 +20,7 @@ import java.util.List;
 
 import doctorwho.ethan.purplemorocco.MainActivity;
 import doctorwho.ethan.purplemorocco.R;
+import io.particle.android.sdk.cloud.ParticleCloud;
 import io.particle.android.sdk.cloud.ParticleCloudException;
 import io.particle.android.sdk.cloud.ParticleCloudSDK;
 import io.particle.android.sdk.cloud.ParticleEvent;
@@ -55,6 +56,20 @@ public class GeofenceService extends IntentService {
             if (geofences != null) {
                 Geofence geofence = geofences.get(0);
                 String requestId = geofence.getRequestId();
+
+                List<String> components = Arrays.asList(requestId.split("-"));
+
+                try {
+                    ParticleCloudSDK.getCloud().publishEvent(components.get(2), components.get(3), ParticleEventVisibility.PRIVATE, 60);
+                } catch (ParticleCloudException e) {
+                    e.printStackTrace();
+                }
+
+                Intent i = new Intent(GeofenceService.this, LocationCheck.class);
+                i.putExtra("task", "remove-" + requestId);
+                startService(i);
+
+                Log.d("", "");
             }
         }
     }

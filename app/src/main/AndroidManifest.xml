@@ -37,10 +37,15 @@
         <service
             android:name=".LocationCheck"
             android:enabled="true"
-            android:exported="true"></service>
+            android:exported="true" />
         <service
             android:name=".GeofenceService"
-            android:exported="false"></service>
+            android:exported="false" />
+
+        <activity
+            android:name=".SecondActivity"
+            android:label="@string/title_activity_second"
+            android:theme="@style/AppTheme.NoActionBar"></activity>
     </application>
 
 </manifest>

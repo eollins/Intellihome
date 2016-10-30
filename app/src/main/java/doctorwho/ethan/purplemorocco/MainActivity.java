@@ -39,6 +39,7 @@ import com.google.android.gms.common.GooglePlayServicesRepairableException;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.identity.intents.Address;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.internal.LocationRequestInternal;
 import com.google.android.gms.location.places.Place;
 import com.google.android.gms.location.places.ui.PlacePicker;
 import com.google.android.gms.maps.model.LatLng;
@@ -105,12 +106,6 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        ProgressDialog dialog=new ProgressDialog(context);
-        dialog.setMessage("Loading...");
-        dialog.setCancelable(false);
-        dialog.setInverseBackgroundForced(false);
-        dialog.show();
-
 
         boards.add("Please select a board");
         newTasks.add("Please select a task");
@@ -127,6 +122,30 @@ public class MainActivity extends AppCompatActivity {
         ArrayAdapter<String> sa = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, options);
         s.setAdapter(sa);
         sa.notifyDataSetChanged();
+
+        File file = new File("/data/data/doctorwho.ethan.purplemorocco/files", "Locations.txt");
+
+        int length = (int) file.length();
+
+        FileOutputStream stream = null;
+        try {
+            stream = new FileOutputStream(file);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        try {
+            try {
+                stream.write("".getBytes());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } finally {
+            try {
+                stream.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
 
         Intent i= new Intent(this, LocationCheck.class);
         this.startService(i);
@@ -248,8 +267,13 @@ public class MainActivity extends AppCompatActivity {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
 
-        dialog.hide();
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+
     }
 
     public void selectCondition(View v) {
@@ -389,7 +413,7 @@ public class MainActivity extends AppCompatActivity {
                 List<String> locations = Arrays.asList(contents.split("~"));
                 int id = locations.size();
 
-                String dataToStore = Integer.toString(id + 1) + "`" + boardSpinner.getSelectedItem().toString() + "`" + taskSpinner.getSelectedItem().toString() + "`" + lon + "`" + lat + "~";
+                String dataToStore = Integer.toString(id + 1) + "`" + boardSpinner.getSelectedItem().toString() + "`" + taskSpinner.getSelectedItem().toString() + "`" + lon + "`" + lat;
 
                 FileOutputStream stream = new FileOutputStream(file);
                 try {
@@ -398,8 +422,10 @@ public class MainActivity extends AppCompatActivity {
                     stream.close();
                 }
 
-//                stopService(new Intent(this, LocationCheck.class));
-                startService(new Intent(this, LocationCheck.class));
+                Intent i = new Intent(this, LocationCheck.class);
+                i.putExtra("task", "add");
+                i.putExtra("data", dataToStore);
+                startService(i);
 
                 id++;
             }

@@ -2,4 +2,7 @@
     <string name="app_name">Purple Morocco</string>
     <string name="send">SEND</string>
     <string name="apiKey">AIzaSyDgI9S1w7isMyq0fkd0s2MiyPZAwmQ4fbM</string>
+    <string name="title_activity_second">Options</string>
+    <string name="action_settings">Settings</string>
+    <string name="section_format">Hello World from section: %1$d</string>
 </resources>
