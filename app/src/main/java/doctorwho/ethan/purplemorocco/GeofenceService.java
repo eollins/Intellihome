@@ -46,6 +46,18 @@ public class GeofenceService extends IntentService {
         String board = "0-Test".substring("0-Test".indexOf('-') + 1);
         String task = "LED On;";
 
+        if (intent.hasExtra("time")) {
+            String taskFull = intent.getStringExtra("taskName") + ";";
+
+            try {
+                ParticleCloudSDK.getCloud().publishEvent(intent.getStringExtra("boardName"), taskFull, ParticleEventVisibility.PRIVATE, 60);
+            } catch (ParticleCloudException e) {
+                e.printStackTrace();
+            }
+
+            return;
+        }
+
         GeofencingEvent event = GeofencingEvent.fromIntent(intent);
         if (event.hasError()) {
 
@@ -57,10 +69,13 @@ public class GeofenceService extends IntentService {
                 Geofence geofence = geofences.get(0);
                 String requestId = geofence.getRequestId();
 
-                List<String> components = Arrays.asList(requestId.split("-"));
+                List<String> l = Arrays.asList(requestId.split(";"));
+                List<String> components = Arrays.asList(l.get(0) .split("-"));
+
+                String taskFull = components.get(3) + ";";
 
                 try {
-                    ParticleCloudSDK.getCloud().publishEvent(components.get(2), components.get(3), ParticleEventVisibility.PRIVATE, 60);
+                    ParticleCloudSDK.getCloud().publishEvent(components.get(2), taskFull, ParticleEventVisibility.PRIVATE, 60);
                 } catch (ParticleCloudException e) {
                     e.printStackTrace();
                 }

@@ -7,6 +7,8 @@ import android.app.TimePickerDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.location.Geocoder;
@@ -59,6 +61,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
@@ -68,6 +71,7 @@ import io.particle.android.sdk.cloud.ParticleEvent;
 import io.particle.android.sdk.cloud.ParticleEventHandler;
 import io.particle.android.sdk.cloud.ParticleEventVisibility;
 import io.particle.android.sdk.devicesetup.ParticleDeviceSetupLibrary;
+import io.particle.android.sdk.utils.Async;
 import io.particle.android.sdk.utils.Toaster;
 
 public class MainActivity extends AppCompatActivity {
@@ -100,18 +104,20 @@ public class MainActivity extends AppCompatActivity {
         super.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         this.requestWindowFeature(Window.FEATURE_NO_TITLE);
 
-        ParticleLogin log = new ParticleLogin();
-        log.execute();
+        new Login().execute();
+
+        new Subscribe().execute();
+
+        Intent q = new Intent(this, TimeCheck.class);
+        startService(q);
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-
         boards.add("Please select a board");
         newTasks.add("Please select a task");
 
-        registerTasks RT = new registerTasks();
-        RT.execute();
+        registerTasks();
 
         Spinner dropdown3 = (Spinner)findViewById(R.id.boardSpinner);
         ArrayAdapter<String> adp = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, boards);
@@ -122,30 +128,6 @@ public class MainActivity extends AppCompatActivity {
         ArrayAdapter<String> sa = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, options);
         s.setAdapter(sa);
         sa.notifyDataSetChanged();
-
-        File file = new File("/data/data/doctorwho.ethan.purplemorocco/files", "Locations.txt");
-
-        int length = (int) file.length();
-
-        FileOutputStream stream = null;
-        try {
-            stream = new FileOutputStream(file);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-        try {
-            try {
-                stream.write("".getBytes());
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        } finally {
-            try {
-                stream.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
 
         Intent i= new Intent(this, LocationCheck.class);
         this.startService(i);
@@ -253,6 +235,10 @@ public class MainActivity extends AppCompatActivity {
 
         });
 
+        SharedPreferences prefs = this.getSharedPreferences("com.doctorwho.ethan", Context.MODE_PRIVATE);
+        String dateTimeKey = "com.example.app.geofences";
+        prefs.edit().putString(dateTimeKey, "").apply();
+
         try {
             FileOutputStream fos = openFileOutput("Locations.txt", Context.MODE_PRIVATE);
             OutputStreamWriter osw = new OutputStreamWriter(fos);
@@ -272,8 +258,11 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onDestroy() {
         super.onDestroy();
+    }
 
-
+    public void optionsClick(View v) {
+        Intent i = new Intent(this, SecondActivity.class);
+        startActivity(i);
     }
 
     public void selectCondition(View v) {
@@ -348,8 +337,7 @@ public class MainActivity extends AppCompatActivity {
         boards.add("Please select a board");
         newTasks.add("Please select a task");
 
-        registerTasks RT = new registerTasks();
-        RT.execute();
+        registerTasks();
 
         Spinner dropdown3 = (Spinner)findViewById(R.id.boardSpinner);
 
@@ -413,14 +401,14 @@ public class MainActivity extends AppCompatActivity {
                 List<String> locations = Arrays.asList(contents.split("~"));
                 int id = locations.size();
 
-                String dataToStore = Integer.toString(id + 1) + "`" + boardSpinner.getSelectedItem().toString() + "`" + taskSpinner.getSelectedItem().toString() + "`" + lon + "`" + lat;
+                String dataToStore = Integer.toString(id + 1) + "`" + boardSpinner.getSelectedItem().toString() + "`" + taskSpinner.getSelectedItem().toString() + "`" + lon + "`" + lat + "~";
 
-                FileOutputStream stream = new FileOutputStream(file);
-                try {
-                    stream.write((contents + dataToStore).getBytes());
-                } finally {
-                    stream.close();
-                }
+//                FileOutputStream stream = new FileOutputStream(file);
+//                try {
+//                    stream.write((contents + dataToStore).getBytes());
+//                } finally {
+//                    stream.close();
+//                }
 
                 Intent i = new Intent(this, LocationCheck.class);
                 i.putExtra("task", "add");
@@ -434,8 +422,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        sendTask send = new sendTask();
-        send.execute();
+        new sendTask().execute();
     }
 
     public void runNow(View v) {
@@ -471,21 +458,8 @@ public class MainActivity extends AppCompatActivity {
         new TimePickerDialog(getApplicationContext(), (TimePickerDialog.OnTimeSetListener) this, calendar.get(Calendar.HOUR), calendar.get(Calendar.MINUTE), false).show();
     }
 
-    private class registerTasks extends AsyncTask<String, Void, String> {
-        @Override
-        protected String doInBackground(String... params) {
-            try {
-                ParticleCloudSDK.getCloud().publishEvent("allBoards", "register", ParticleEventVisibility.PRIVATE, 60);
-            } catch (ParticleCloudException e) {
-                e.printStackTrace();
-            }
-
-            return "wibbly wobbly timey wimey";
-        }
-
-        @Override
-        protected void onPostExecute(String result) {
-        }
+    public void registerTasks() {
+        new registerTasks().execute();
     }
 
     public void placeApi(View v) {
@@ -533,6 +507,63 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public void subscriptionEvent(String info, String data, String name, String tasks) {
+        int boardId = boards.size() - 1;
+
+        boards.add(boardId + "-" + name);
+        String[] taskArray = tasks.split(",");
+
+        for (int i = 0; i < taskArray.length; i++) {
+            newTasks.add(boardId + "-" + taskArray[i]);
+        }
+    }
+
+    private class Login extends AsyncTask<String, Void, String> {
+
+        @Override
+        protected String doInBackground(String... params) {
+            try {
+                ParticleCloudSDK.getCloud().logIn("ethanollins6@gmail.com", "33263326e");
+            } catch (ParticleCloudException e) {
+                e.printStackTrace();
+            }
+
+            return null;
+        }
+    }
+
+    private class Subscribe extends AsyncTask<String, Void, String> {
+
+        @Override
+        protected String doInBackground(String... params) {
+            long subscriptionId;
+            try {
+                subscriptionId = ParticleCloudSDK.getCloud().subscribeToAllEvents(
+                        "mainBoard",  // the first argument, "eventNamePrefix", is optional
+                        new ParticleEventHandler() {
+                            public void onEvent(String eventName, ParticleEvent event) {
+                                //Toaster.s(MainActivity.this, event.dataPayload);
+
+                                String info = event.dataPayload;
+                                String data = info.substring(info.indexOf(':') + 1);
+                                String name = data.substring(data.indexOf('=') + 1, data.indexOf(';'));
+                                String tasks = data.substring(data.indexOf(';') + 1);
+
+                                subscriptionEvent(info, data, name, tasks);
+                            }
+
+                            public void onEventError(Exception e) {
+                                Log.e("some tag", "Event error: ", e);
+                            }
+                        });
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            return null;
+        }
+    }
+
     private class sendTask extends AsyncTask<String, Void, String> {
         @Override
         protected String doInBackground(String... params) {
@@ -543,7 +574,22 @@ public class MainActivity extends AppCompatActivity {
                     ParticleCloudSDK.getCloud().publishEvent(selectedBoard.substring(selectedBoard.indexOf('-') + 1), selectedTask.substring(selectedTask.indexOf('-') + 1) + ";", ParticleEventVisibility.PRIVATE, 60);
                 }
                 else {
-                    ParticleCloudSDK.getCloud().publishEvent(selectedBoard.substring(selectedBoard.indexOf('-') + 1), (selectedTask.substring(selectedTask.indexOf('-') + 1) + ";" + sHour + ":" + sMinute), ParticleEventVisibility.PRIVATE, 60);
+                    Date dt = new Date();
+                    List<String> timeData = Arrays.asList(dt.toString().split(" "));
+                    List<String> components = Arrays.asList(timeData.get(3).split(":"));
+
+                    if (Integer.toString(sHour).equals(components.get(0)) && Integer.toString(sMinute).equals(components.get(1))) {
+                        ParticleCloudSDK.getCloud().publishEvent(selectedBoard.substring(selectedBoard.indexOf('-') + 1), selectedTask.substring(selectedTask.indexOf('-') + 1) + ";", ParticleEventVisibility.PRIVATE, 60);
+                        return "";
+                    }
+
+                    Intent i = new Intent(MainActivity.this, TimeCheck.class);
+                    i.putExtra("task", "add");
+                    i.putExtra("boardName", selectedBoard.substring(selectedBoard.indexOf('-') + 1));
+                    i.putExtra("taskName", selectedTask.substring(selectedTask.indexOf('-') + 1));
+                    i.putExtra("time", sHour + ":" + sMinute);
+                    startService(i);
+//                    ParticleCloudSDK.getCloud().publishEvent(selectedBoard.substring(selectedBoard.indexOf('-') + 1), (selectedTask.substring(selectedTask.indexOf('-') + 1) + ";" + sHour + ":" + sMinute), ParticleEventVisibility.PRIVATE, 60);
                 }
 
             } catch (ParticleCloudException e) {
@@ -558,60 +604,21 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private class ParticleLogin extends AsyncTask<String, Void, String> {
+    private class registerTasks extends AsyncTask<String, Void, String> {
         @Override
         protected String doInBackground(String... params) {
             try {
-                ParticleCloudSDK.getCloud().logIn("ethanollins6@gmail.com", "33263326e");
+                ParticleCloudSDK.getCloud().publishEvent("register", "", ParticleEventVisibility.PRIVATE, 60);
             } catch (ParticleCloudException e) {
                 e.printStackTrace();
             }
 
-            Toaster.s(MainActivity.this, "Logged in!");
-
-            long subscriptionId;  // save this for later, for unsubscribing
-            try {
-                subscriptionId = ParticleCloudSDK.getCloud().subscribeToAllEvents(
-                        "mainBoard",  // the first argument, "eventNamePrefix", is optional
-                        new ParticleEventHandler() {
-                            public void onEvent(String eventName, ParticleEvent event) {
-                                //Toaster.s(MainActivity.this, event.dataPayload);
-
-                                String info = event.dataPayload;
-                                String data = info.substring(info.indexOf(':') + 1);
-                                String name = data.substring(data.indexOf('=') + 1, data.indexOf(';'));
-                                String tasks = data.substring(data.indexOf(';') + 1);
-
-                                int boardId = boards.size() - 1;
-
-                                boards.add(boardId + "-" + name);
-                                String[] taskArray = tasks.split(",");
-
-                                for (int i = 0; i < taskArray.length; i++) {
-                                    newTasks.add(boardId + "-" + taskArray[i]);
-                                }
-
-                                //Toaster.s(MainActivity.this, (String) boards.get(0));
-                            }
-
-                            public void onEventError(Exception e) {
-                                Log.e("some tag", "Event error: ", e);
-                            }
-                        });
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            return "Logged in";
+            return "wibbly wobbly timey wimey";
         }
 
         @Override
         protected void onPostExecute(String result) {
         }
-    }
-
-    public void decode(String info) {
-
     }
 }
 

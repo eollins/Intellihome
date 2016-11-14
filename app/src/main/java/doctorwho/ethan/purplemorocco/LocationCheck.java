@@ -30,6 +30,7 @@ import com.google.gson.GsonBuilder;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,6 +40,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Set;
+
+import io.particle.android.sdk.cloud.ParticleCloudSDK;
 
 
 public class LocationCheck extends Service implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
@@ -59,25 +62,42 @@ public class LocationCheck extends Service implements GoogleApiClient.Connection
         Log.d("e", "e");
 
         String task = "";
-        if (intent.hasExtra("task")) {
-            task = intent.getStringExtra("task");
+        try {
+            task = "";
+            if (intent.hasExtra("task")) {
+                task = intent.getStringExtra("task");
+            }
+        }
+        catch (Exception e) {
+            e.printStackTrace();
         }
 
+
         if (task.equals("")) { }
-        else if (task.equals("add")) {
-            String data = "";
-            if (intent.hasExtra("data")) {
-                data = intent.getStringExtra("data");
+        else if (task.equals("add") || !intent.hasExtra("task")) {
+            String data2 = "";
+            if (task.equals("add")) {
+                if (intent.hasExtra("data")) {
+                    data2 = intent.getStringExtra("data");
+                } else {
+                    return START_STICKY;
+                }
             }
             else {
-                return START_STICKY;
+                SharedPreferences prefs = this.getSharedPreferences("com.doctorwho.ethan", Context.MODE_PRIVATE);
+                String dateTimeKey = "com.example.app.geofences";
+                String locations = prefs.getString(dateTimeKey, "");
+                data2 = locations;
             }
 
-            List<String> components = Arrays.asList(data.split("`"));
+            data2 = data2.replace("~", "");
+            List<String> components = Arrays.asList(data2.split("`"));
             Log.e("", "");
 
+            String rId = requests.size() + "-" + components.get(1) + "-" + components.get(2) + ";";
+
             final Geofence geofence = new Geofence.Builder()
-                    .setRequestId(requests.size() + "-" + components.get(1) + "-" + components.get(2) + ";")
+                    .setRequestId(requests.size() + "-" + components.get(1) + "-" + components.get(2) + ";" + data2)
                     .setCircularRegion(Double.parseDouble(components.get(3)), Double.parseDouble(components.get(4)), 100)
                     .setExpirationDuration(Geofence.NEVER_EXPIRE)
                     .setNotificationResponsiveness(1000)
@@ -110,11 +130,25 @@ public class LocationCheck extends Service implements GoogleApiClient.Connection
                             }
                         });
                 }
+
+            data2 = data2 + "~";
+
+            try {
+                editFile(data2, false);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
         else if (task.contains("remove")) {
             List<String> geofencesToRemove = new ArrayList<>();
             geofencesToRemove.add(task.substring(task.indexOf('-') + 1));
             LocationServices.GeofencingApi.removeGeofences(googleApiClient, geofencesToRemove);
+
+            try {
+                editFile(geofencesToRemove.get(0), true);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
 //        intent = new Intent(this,GeofenceService.class);
@@ -222,5 +256,85 @@ public class LocationCheck extends Service implements GoogleApiClient.Connection
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
 
+    }
+
+    public void editFile(String data, boolean remove) throws IOException {
+        if (!remove) {
+            SharedPreferences prefs = this.getSharedPreferences("com.doctorwho.ethan", Context.MODE_PRIVATE);
+            String dateTimeKey = "com.doctorwho.ethan.geofences";
+            String locations = prefs.getString(dateTimeKey, "");
+            prefs.edit().putString(dateTimeKey, locations + data).apply();
+        }
+        else {
+            String finalData = data.substring(data.indexOf(";") + 1);
+
+            SharedPreferences prefs = this.getSharedPreferences("com.doctorwho.ethan", Context.MODE_PRIVATE);
+            String dateTimeKey = "com.doctorwho.ethan.geofences";
+            String locations = prefs.getString(dateTimeKey, "");
+            List<String> list = Arrays.asList(locations.split("~"));
+
+            String s = "";
+            for (String str : list) {
+                if (str.equals(finalData)) { }
+                else {
+                    s += str;
+                }
+            }
+
+            prefs.edit().putString(dateTimeKey, s).apply();
+        }
+//        File file = new File("/data/data/doctorwho.ethan.purplemorocco/files", "Locations.txt");
+//
+//        int length = (int) file.length();
+//
+//        byte[] bytes = new byte[length];
+//
+//        FileInputStream in = new FileInputStream(file);
+//        try {
+//            in.read(bytes);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        } finally {
+//            in.close();
+//        }
+//
+//        String contents = new String(bytes);
+//
+//        FileOutputStream stream = new FileOutputStream(file);
+//
+//        if (remove) {
+//            List<String> locations = Arrays.asList(contents.split("~"));
+//            locations.remove(locations.indexOf(data));
+//            String newString = "";
+//
+//            for (int i = 0; i < locations.size(); i++) {
+//                newString += locations.get(i) + "~";
+//            }
+//
+//            try {
+//                stream.write(newString.getBytes());
+//            } finally {
+//                stream.close();
+//            }
+//        }
+//        else {
+//            List<String> locations = new ArrayList<>();
+//            if (contents == "") {
+//                locations = Arrays.asList(contents.split("~"));
+//            }
+//
+//            locations.add(data);
+//            String newString = "";
+//
+//            for (int i = 0; i < locations.size(); i++) {
+//                newString += locations.get(i) + "~";
+//            }
+//
+//            try {
+//                stream.write(newString.getBytes());
+//            } finally {
+//                stream.close();
+//            }
+//        }
     }
 }

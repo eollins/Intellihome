@@ -42,10 +42,18 @@
             android:name=".GeofenceService"
             android:exported="false" />
 
-        <activity
-            android:name=".SecondActivity"
-            android:label="@string/title_activity_second"
-            android:theme="@style/AppTheme.NoActionBar"></activity>
+        <activity android:name=".SecondActivity" />
+
+        <service
+            android:name=".TimeCheck"
+            android:enabled="true"
+            android:exported="true" />
+
+        <receiver
+            android:name=".IntentReceiver"
+            android:enabled="true"
+            android:exported="true">
+        </receiver>
     </application>
 
 </manifest>

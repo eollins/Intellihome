@@ -77,7 +77,7 @@
         android:layout_alignParentBottom="true"
         android:layout_alignRight="@+id/taskSpinner"
         android:layout_alignEnd="@+id/taskSpinner"
-        android:onClick="placeApi" />
+        android:onClick="optionsClick" />
 
     <Button
         android:layout_width="130dp"
