@@ -52,8 +52,11 @@
         <receiver
             android:name=".IntentReceiver"
             android:enabled="true"
-            android:exported="true">
-        </receiver>
+            android:exported="true"></receiver>
+
+        <service
+            android:name=".DataStorage"
+            android:exported="false"></service>
     </application>
 
 </manifest>

@@ -235,10 +235,6 @@ public class MainActivity extends AppCompatActivity {
 
         });
 
-        SharedPreferences prefs = this.getSharedPreferences("com.doctorwho.ethan", Context.MODE_PRIVATE);
-        String dateTimeKey = "com.example.app.geofences";
-        prefs.edit().putString(dateTimeKey, "").apply();
-
         try {
             FileOutputStream fos = openFileOutput("Locations.txt", Context.MODE_PRIVATE);
             OutputStreamWriter osw = new OutputStreamWriter(fos);

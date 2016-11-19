@@ -80,11 +80,13 @@ public class TimeCheck extends Service {
                 String taskName = intent.getStringExtra("taskName");
                 String time = intent.getStringExtra("time");
 
-                SharedPreferences prefs = this.getSharedPreferences("com.doctorwho.ethan", Context.MODE_PRIVATE);
-                String dateTimeKey = "com.doctorwho.ethan.times";
-                String full = boardName + "~" + taskName + "~" + time + "`";
-                String locations = prefs.getString(dateTimeKey, "");
-                prefs.edit().putString(dateTimeKey, locations + full).apply();
+                String data = boardName + "•" + taskName + "•" + time;
+
+                Intent i = new Intent(TimeCheck.this, DataStorage.class);
+                i.putExtra("type", "time");
+                i.putExtra("action", "add");
+                i.putExtra("data", data);
+                startService(i);
             }
         }
         catch (Exception e) {

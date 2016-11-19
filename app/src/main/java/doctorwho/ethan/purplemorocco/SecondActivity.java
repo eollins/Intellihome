@@ -27,84 +27,56 @@ import java.util.List;
 import java.util.Locale;
 
 public class SecondActivity extends AppCompatActivity {
-    static final String[] FRUITS = new String[] { "Apple", "Avocado", "Banana",
-            "Blueberry", "Coconut", "Durian", "Guava", "Kiwifruit",
-            "Jackfruit", "Mango", "Olive", "Pear", "Sugar-apple" };
+    List<String> timeList;
+    List<String> locationList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_second);
 
-        final ListView listView = (ListView) findViewById(R.id.listView);
+        SharedPreferences prefs = this.getSharedPreferences("com.doctorwho.ethan", Context.MODE_PRIVATE);
+        String timeKey = "com.doctorwho.ethan.times";
+        String locationKey = "com.doctorwho.ethan.geofences";
+        String times = prefs.getString(timeKey, "");
+        String locations = prefs.getString(locationKey, "");
 
-        // Defined Array values to show in ListView
-        String[] values = new String[] { "Android List View",
-                "Adapter implementation",
-                "Simple List View In Android",
-                "Create List View Android",
-                "Android Example",
-                "List View Source Code",
-                "List View Array Adapter",
-                "Android Example List View"
-        };
+        timeList = Arrays.asList(times.split("`"));
+        locationList = Arrays.asList(locations.split("`"));
 
-        // Define a new Adapter
-        // First parameter - Context
-        // Second parameter - Layout for the row
-        // Third parameter - ID of the TextView to which the data is written
-        // Forth - the Array of data
+        String[] options = { "Time-Based", "Location-Based "};
+        final Spinner dropdown2 = (Spinner)findViewById(R.id.spinner2);
+        ArrayAdapter<String> adapter2 = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, options);
+        dropdown2.setAdapter(adapter2);
 
-        SharedPreferences prefs = this.getSharedPreferences(
-                "com.doctorwho.ethan", Context.MODE_PRIVATE);
-        String dateTimeKey = "com.doctorwho.ethan.geofences";
-        String l = prefs.getString(dateTimeKey, "");
+        dropdown2.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
+                if (position == 0) {
+                    String[] times = new String[timeList.size()];
+                    for (int i = 0; i < timeList.size(); i++) {
+                        times[i] = timeList.get(i);
+                    }
 
-        List<String> locations = Arrays.asList(l.split("~"));
-        List<String> names = new ArrayList<>();
+                    Spinner spinner = (Spinner)findViewById(R.id.spinner3);
+                    ArrayList<String> total = new ArrayList<>();
 
-        for (String s : locations) {
-            List<String> components = Arrays.asList(s.split("`"));
+                    for (int i = 0; i < timeList.size(); i++) {
+                        total.add(timeList.get(i));
+                    }
 
-            Geocoder geocoder = new Geocoder(this, Locale.getDefault());
-
-            try {
-                List<Address> addresses = geocoder.getFromLocation(Double.parseDouble(components.get(3)), Double.parseDouble(components.get(4)), 1);
-                names.add(addresses.get(0).getAddressLine(0));
-                Log.e("", "");
-            } catch (IOException e) {
-                e.printStackTrace();
+                    ArrayAdapter<String> adapter = new ArrayAdapter<String>(getApplicationContext(), R.layout.support_simple_spinner_dropdown_item, total);
+                    adapter.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item);
+                    spinner.setAdapter(adapter);
+                }
             }
-        }
-
-
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
-                android.R.layout.simple_list_item_1, android.R.id.text1, names);
-
-        // Assign adapter to ListView
-        listView.setAdapter(adapter);
-        listView.deferNotifyDataSetChanged();
-
-        // ListView Item Click Listener
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
             @Override
-            public void onItemClick(AdapterView<?> parent, View view,
-                                    int position, long id) {
-
-                // ListView Clicked item index
-                int itemPosition     = position;
-
-                // ListView Clicked item value
-                String  itemValue    = (String) listView.getItemAtPosition(position);
-
-                // Show Alert
-                Toast.makeText(getApplicationContext(),
-                        "Position :"+itemPosition+"  ListItem : " +itemValue , Toast.LENGTH_LONG)
-                        .show();
-
+            public void onNothingSelected(AdapterView<?> parentView) {
+                // your code here
             }
 
         });
+
     }
 }

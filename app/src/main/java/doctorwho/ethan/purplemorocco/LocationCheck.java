@@ -67,14 +67,13 @@ public class LocationCheck extends Service implements GoogleApiClient.Connection
             if (intent.hasExtra("task")) {
                 task = intent.getStringExtra("task");
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
 
-        if (task.equals("")) { }
-        else if (task.equals("add") || !intent.hasExtra("task")) {
+        if (task.equals("")) {
+        } else if (task.equals("add") || !intent.hasExtra("task")) {
             String data2 = "";
             if (task.equals("add")) {
                 if (intent.hasExtra("data")) {
@@ -82,8 +81,7 @@ public class LocationCheck extends Service implements GoogleApiClient.Connection
                 } else {
                     return START_STICKY;
                 }
-            }
-            else {
+            } else {
                 SharedPreferences prefs = this.getSharedPreferences("com.doctorwho.ethan", Context.MODE_PRIVATE);
                 String dateTimeKey = "com.example.app.geofences";
                 String locations = prefs.getString(dateTimeKey, "");
@@ -114,45 +112,46 @@ public class LocationCheck extends Service implements GoogleApiClient.Connection
 
             //googleApiClient.connect();
             if (!googleApiClient.isConnected()) {
-                Log.i("Service", "GoogleApiClient is not connected");
-            } else {
-                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                }
-                LocationServices.GeofencingApi.addGeofences(googleApiClient, geofenceRequest, pendingIntent)
-                        .setResultCallback(new ResultCallback<Status>() {
-                            @Override
-                            public void onResult(@NonNull Status status) {
-                                if (status.isSuccess()) {
-                                    Log.i("Service", "Added geofence");
-                                } else {
-                                    Log.i("Service", "Geofence failed");
+                if (!googleApiClient.isConnected()) {
+                    Log.i("Service", "GoogleApiClient is not connected");
+                } else {
+                    if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                    }
+                    LocationServices.GeofencingApi.addGeofences(googleApiClient, geofenceRequest, pendingIntent)
+                            .setResultCallback(new ResultCallback<Status>() {
+                                @Override
+                                public void onResult(@NonNull Status status) {
+                                    if (status.isSuccess()) {
+                                        Log.i("Service", "Added geofence");
+                                    } else {
+                                        Log.i("Service", "Geofence failed");
+                                    }
                                 }
-                            }
-                        });
+                            });
                 }
 
-            data2 = data2 + "~";
+                data2 = data2 + "~";
 
-            try {
-                editFile(data2, false);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        else if (task.contains("remove")) {
-            List<String> geofencesToRemove = new ArrayList<>();
-            geofencesToRemove.add(task.substring(task.indexOf('-') + 1));
-            LocationServices.GeofencingApi.removeGeofences(googleApiClient, geofencesToRemove);
+                try {
+                    editFile(data2, false);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } else if (task.contains("remove")) {
+                List<String> geofencesToRemove = new ArrayList<>();
+                geofencesToRemove.add(task.substring(task.indexOf('-') + 1));
+                LocationServices.GeofencingApi.removeGeofences(googleApiClient, geofencesToRemove);
 
-            try {
-                editFile(geofencesToRemove.get(0), true);
-            } catch (IOException e) {
-                e.printStackTrace();
+                try {
+                    editFile(geofencesToRemove.get(0), true);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
-        }
 
 //        intent = new Intent(this,GeofenceService.class);
 //        this.startService(intent);
+        }
 
         return Service.START_STICKY;
     }
@@ -259,82 +258,17 @@ public class LocationCheck extends Service implements GoogleApiClient.Connection
     }
 
     public void editFile(String data, boolean remove) throws IOException {
+        Intent intent = new Intent(LocationCheck.this, DataStorage.class);
+        intent.putExtra("type", "location");
+        intent.putExtra("data", data);
+
         if (!remove) {
-            SharedPreferences prefs = this.getSharedPreferences("com.doctorwho.ethan", Context.MODE_PRIVATE);
-            String dateTimeKey = "com.doctorwho.ethan.geofences";
-            String locations = prefs.getString(dateTimeKey, "");
-            prefs.edit().putString(dateTimeKey, locations + data).apply();
+            intent.putExtra("action", "remove");
         }
         else {
-            String finalData = data.substring(data.indexOf(";") + 1);
-
-            SharedPreferences prefs = this.getSharedPreferences("com.doctorwho.ethan", Context.MODE_PRIVATE);
-            String dateTimeKey = "com.doctorwho.ethan.geofences";
-            String locations = prefs.getString(dateTimeKey, "");
-            List<String> list = Arrays.asList(locations.split("~"));
-
-            String s = "";
-            for (String str : list) {
-                if (str.equals(finalData)) { }
-                else {
-                    s += str;
-                }
-            }
-
-            prefs.edit().putString(dateTimeKey, s).apply();
+            intent.putExtra("action", "add");
         }
-//        File file = new File("/data/data/doctorwho.ethan.purplemorocco/files", "Locations.txt");
-//
-//        int length = (int) file.length();
-//
-//        byte[] bytes = new byte[length];
-//
-//        FileInputStream in = new FileInputStream(file);
-//        try {
-//            in.read(bytes);
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        } finally {
-//            in.close();
-//        }
-//
-//        String contents = new String(bytes);
-//
-//        FileOutputStream stream = new FileOutputStream(file);
-//
-//        if (remove) {
-//            List<String> locations = Arrays.asList(contents.split("~"));
-//            locations.remove(locations.indexOf(data));
-//            String newString = "";
-//
-//            for (int i = 0; i < locations.size(); i++) {
-//                newString += locations.get(i) + "~";
-//            }
-//
-//            try {
-//                stream.write(newString.getBytes());
-//            } finally {
-//                stream.close();
-//            }
-//        }
-//        else {
-//            List<String> locations = new ArrayList<>();
-//            if (contents == "") {
-//                locations = Arrays.asList(contents.split("~"));
-//            }
-//
-//            locations.add(data);
-//            String newString = "";
-//
-//            for (int i = 0; i < locations.size(); i++) {
-//                newString += locations.get(i) + "~";
-//            }
-//
-//            try {
-//                stream.write(newString.getBytes());
-//            } finally {
-//                stream.close();
-//            }
-//        }
+
+        startService(intent);
     }
 }
