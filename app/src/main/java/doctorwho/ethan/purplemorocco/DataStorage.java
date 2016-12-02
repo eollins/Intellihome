@@ -36,6 +36,7 @@ public class DataStorage extends IntentService {
                 String dateTimeKey = "com.doctorwho.ethan.geofences";
                 String locations = prefs.getString(dateTimeKey, "");
                 prefs.edit().putString(dateTimeKey, locations + data).apply();
+
             }
             else if (action.equals("remove")) {
                 String finalData = data.substring(data.indexOf(";") + 1);
@@ -52,6 +53,10 @@ public class DataStorage extends IntentService {
                 }
 
                 prefs.edit().putString(dateTimeKey, s).apply();
+            }
+            else if(action.equals("clear")) {
+                String dateTimeKey = "com.doctorwho.ethan.geofences";
+                prefs.edit().putString(dateTimeKey, "").apply();
             }
         }
     }

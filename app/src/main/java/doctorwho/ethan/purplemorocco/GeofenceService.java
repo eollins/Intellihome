@@ -69,19 +69,21 @@ public class GeofenceService extends IntentService {
                 Geofence geofence = geofences.get(0);
                 String requestId = geofence.getRequestId();
 
-                List<String> l = Arrays.asList(requestId.split(";"));
-                List<String> components = Arrays.asList(l.get(0) .split("-"));
+                List<String> components = Arrays.asList(requestId.split("~"));
+                String boardName = components.get(0);
+                String taskName = components.get(1);
 
-                String taskFull = components.get(3) + ";";
+                String taskFull = taskName + ";";
 
                 try {
-                    ParticleCloudSDK.getCloud().publishEvent(components.get(2), taskFull, ParticleEventVisibility.PRIVATE, 60);
+                    ParticleCloudSDK.getCloud().publishEvent(boardName, taskFull, ParticleEventVisibility.PRIVATE, 60);
                 } catch (ParticleCloudException e) {
                     e.printStackTrace();
                 }
 
-                Intent i = new Intent(GeofenceService.this, LocationCheck.class);
-                i.putExtra("task", "remove-" + requestId);
+                Intent i = new Intent(GeofenceService.this, LocationCheck2.class);
+                i.putExtra("task", "remove");
+                i.putExtra("data", requestId);
                 startService(i);
 
                 Log.d("", "");

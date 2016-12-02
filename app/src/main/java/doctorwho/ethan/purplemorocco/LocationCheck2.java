@@ -7,15 +7,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.location.Location;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.provider.SyncStateContract;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -24,79 +21,53 @@ import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingRequest;
 import com.google.android.gms.location.LocationServices;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
-import java.util.Set;
 
 import io.particle.android.sdk.cloud.ParticleCloudSDK;
 
 
-public class LocationCheck extends Service implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
+public class LocationCheck2 extends Service implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
     GoogleApiClient googleApiClient = null;
 
-    List<Geofence> geofences = new ArrayList<>();
-    List<GeofencingRequest> requests = new ArrayList<>();
-    List<PendingIntent> intents = new ArrayList<>();
-
-    int id = 0;
-
-    public LocationCheck() {
-    }
+    /*Process:
+    • Check to see which type of task is being requested
+    • If service is restarting, do nothing and create geofences per stored data
+    • If MainActivity is requesting "add," add new data to prefs and create geofences
+    • If GeofenceService or SecondActivity are requesting "remove," remove old data and create geofences
+     */
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        //TODO do something useful
-        Log.d("e", "e");
-
-        String task = "";
-        try {
-            task = "";
-            if (intent.hasExtra("task")) {
-                task = intent.getStringExtra("task");
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+        if (!intent.hasExtra("task")) {
+        }
+        else if (intent.hasExtra("task") && intent.getStringExtra("task").equals("add")) {
+            editData(intent.getStringExtra("data"), false);
+        }
+        else if (intent.hasExtra("task") && intent.getStringExtra("task").equals("remove")) {
+            editData(intent.getStringExtra("data"), true);
         }
 
+        SharedPreferences prefs = this.getSharedPreferences("com.doctorwho.ethan", Context.MODE_PRIVATE);
+        String dateTimeKey = "com.doctorwho.ethan.geofences";
+        String locations = prefs.getString(dateTimeKey, "");
 
-        if (task.equals("")) {
-        } else if (task.equals("add") || !intent.hasExtra("task")) {
-            String data2 = "";
-            if (task.equals("add")) {
-                if (intent.hasExtra("data")) {
-                    data2 = intent.getStringExtra("data");
-                } else {
-                    return START_STICKY;
-                }
-            } else {
-                SharedPreferences prefs = this.getSharedPreferences("com.doctorwho.ethan", Context.MODE_PRIVATE);
-                String dateTimeKey = "com.doctorwho.ethan.geofences";
-                String locations = prefs.getString(dateTimeKey, "");
-                data2 = locations;
-            }
+        List<String> data = Arrays.asList(locations.split("~"));
+        for (String s : data) {
+            List<String> components = Arrays.asList(s.split("`"));
+            String boardName = components.get(1);
+            String taskName = components.get(2);
+            String longitude = components.get(3);
+            String latitude = components.get(4);
 
-            data2 = data2.replace("~", "");
-            List<String> components = Arrays.asList(data2.split("`"));
-            Log.e("", "");
-
-            String rId = requests.size() + "`" + components.get(1) + "`" + components.get(2) + ";";
+            String rId = boardName + "~" + taskName + "~" + longitude + "~" + latitude;
 
             final Geofence geofence = new Geofence.Builder()
                     .setRequestId(rId)
-                    .setCircularRegion(Double.parseDouble(components.get(3)), Double.parseDouble(components.get(4)), 100)
+                    .setCircularRegion(Double.parseDouble(longitude), Double.parseDouble(latitude), 100)
                     .setExpirationDuration(Geofence.NEVER_EXPIRE)
                     .setNotificationResponsiveness(1000)
                     .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER)
@@ -106,9 +77,9 @@ public class LocationCheck extends Service implements GoogleApiClient.Connection
                     .setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER)
                     .addGeofence(geofence).build();
 
-            Intent i = new Intent(LocationCheck.this, GeofenceService.class);
+            Intent i = new Intent(LocationCheck2.this, GeofenceService.class);
             Log.e("", "");
-            PendingIntent pendingIntent = PendingIntent.getService(LocationCheck.this, 0, i, PendingIntent.FLAG_UPDATE_CURRENT);
+            PendingIntent pendingIntent = PendingIntent.getService(LocationCheck2.this, 0, i, PendingIntent.FLAG_UPDATE_CURRENT);
 
             //googleApiClient.connect();
             if (!googleApiClient.isConnected()) {
@@ -129,36 +100,10 @@ public class LocationCheck extends Service implements GoogleApiClient.Connection
                                 }
                             });
                 }
-
-                data2 = data2 + "~";
-            }
-
-            try {
-                editFile(data2, false);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        } else if (task.contains("remove")) {
-            List<String> geofencesToRemove = new ArrayList<>();
-            geofencesToRemove.add(task.substring(task.indexOf('`') + 1));
-            LocationServices.GeofencingApi.removeGeofences(googleApiClient, geofencesToRemove);
-
-            try {
-                editFile(geofencesToRemove.get(0), true);
-            } catch (IOException e) {
-                e.printStackTrace();
             }
         }
 
-//        intent = new Intent(this,GeofenceService.class);
-//        this.startService(intent);
-
         return Service.START_STICKY;
-    }
-
-    public void removeGeofence(String geofenceID) {
-        if (googleApiClient == null) { return; }
-        Log.e("", "");
     }
 
     @Override
@@ -169,7 +114,7 @@ public class LocationCheck extends Service implements GoogleApiClient.Connection
 
     @Override
     public void onCreate(){
-        googleApiClient = new GoogleApiClient.Builder(LocationCheck.this)
+        googleApiClient = new GoogleApiClient.Builder(LocationCheck2.this)
                 .addApi(LocationServices.API)
                 .addConnectionCallbacks(new GoogleApiClient.ConnectionCallbacks() {
                     @Override
@@ -191,14 +136,27 @@ public class LocationCheck extends Service implements GoogleApiClient.Connection
                 .build();
 
         googleApiClient.connect();
-
-        Log.e("", "");
     }
 
     @Override
     public void onDestroy() {
         googleApiClient.disconnect();
-        super.onDestroy();
+    }
+
+    public void editData(String dataToChange, boolean removal) {
+        Intent i = new Intent(LocationCheck2.this, DataStorage.class);
+        i.putExtra("data", dataToChange);
+        i.putExtra("type", "location");
+
+        if (!removal) {
+            i.putExtra("action", "add");
+
+        }
+        else {
+            i.putExtra("action", "remove");
+        }
+
+        startService(i);
     }
 
     @Override
@@ -214,20 +172,5 @@ public class LocationCheck extends Service implements GoogleApiClient.Connection
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
 
-    }
-
-    public void editFile(String data, boolean remove) throws IOException {
-        Intent intent = new Intent(LocationCheck.this, DataStorage.class);
-        intent.putExtra("type", "location");
-        intent.putExtra("data", data);
-
-        if (!remove) {
-            intent.putExtra("action", "add");
-        }
-        else {
-            intent.putExtra("action", "remove");
-        }
-
-        startService(intent);
     }
 }

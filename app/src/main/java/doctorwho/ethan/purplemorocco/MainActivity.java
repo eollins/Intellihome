@@ -14,6 +14,7 @@ import android.content.pm.PackageManager;
 import android.location.Geocoder;
 import android.os.AsyncTask;
 import android.os.Build;
+import android.provider.ContactsContract;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
@@ -114,8 +115,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        boards.add("Please select a board");
-        newTasks.add("Please select a task");
+        boards.add("Select a board");
+        newTasks.add("Select a task");
 
         registerTasks();
 
@@ -129,7 +130,7 @@ public class MainActivity extends AppCompatActivity {
         s.setAdapter(sa);
         sa.notifyDataSetChanged();
 
-        Intent i= new Intent(this, LocationCheck.class);
+        Intent i= new Intent(this, LocationCheck2.class);
         this.startService(i);
 
         s.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -330,8 +331,8 @@ public class MainActivity extends AppCompatActivity {
         boards.clear();
         newTasks.clear();
 
-        boards.add("Please select a board");
-        newTasks.add("Please select a task");
+        boards.add("Select a board");
+        newTasks.add("Select a task");
 
         registerTasks();
 
@@ -345,7 +346,7 @@ public class MainActivity extends AppCompatActivity {
 //        dropdown2.setAdapter(adapter2);
     }
 
-    boolean checked;
+    int type = 0;
     public void sendTask(View v) {
         new AlertDialog.Builder(this)
                 .setMessage("Are you sure you want to run this task?")
@@ -359,63 +360,23 @@ public class MainActivity extends AppCompatActivity {
                 .show();
     }
 
+    String dataPhase1 = "";
     public void sendCompleteTask() {
         Spinner s = (Spinner)findViewById(R.id.spinner);
         TextView t = (TextView)findViewById(R.id.selection);
 
-        checked = false;
+        Spinner boardSpinner = (Spinner)findViewById(R.id.boardSpinner);
+        Spinner taskSpinner = (Spinner)findViewById(R.id.taskSpinner);
+
         if (s.getSelectedItemPosition() == 0) {
-            checked = true;
+            type = 0;
         }
         else if (s.getSelectedItemPosition() == 1) {
-
+            type = 1;
         }
         else {
-            Spinner boardSpinner = (Spinner)findViewById(R.id.boardSpinner);
-            Spinner taskSpinner = (Spinner)findViewById(R.id.taskSpinner);
-
-            String[] coords = coordinates.split(" ");
-
-            String lon = coords[0];
-            String lat = coords[1];
-
-            try {
-                File file = new File("/data/data/doctorwho.ethan.purplemorocco/files", "Locations.txt");
-
-                int length = (int) file.length();
-
-                byte[] bytes = new byte[length];
-
-                FileInputStream in = new FileInputStream(file);
-                try {
-                    in.read(bytes);
-                } finally {
-                    in.close();
-                }
-
-                String contents = new String(bytes);
-                List<String> locations = Arrays.asList(contents.split("~"));
-                int id = locations.size();
-
-                String dataToStore = Integer.toString(id + 1) + "`" + boardSpinner.getSelectedItem().toString() + "`" + taskSpinner.getSelectedItem().toString() + "`" + lon + "`" + lat + "~";
-
-//                FileOutputStream stream = new FileOutputStream(file);
-//                try {
-//                    stream.write((contents + dataToStore).getBytes());
-//                } finally {
-//                    stream.close();
-//                }
-
-                Intent i = new Intent(this, LocationCheck.class);
-                i.putExtra("task", "add");
-                i.putExtra("data", dataToStore);
-                startService(i);
-
-                id++;
-            }
-            catch (Exception e) {
-                e.printStackTrace();
-            }
+            type = 2;
+            dataPhase1 = "0" + "`" + boardSpinner.getSelectedItem().toString() + "`" + taskSpinner.getSelectedItem().toString();
         }
 
         new sendTask().execute();
@@ -452,6 +413,13 @@ public class MainActivity extends AppCompatActivity {
 
     public void setTime(View view) {
         new TimePickerDialog(getApplicationContext(), (TimePickerDialog.OnTimeSetListener) this, calendar.get(Calendar.HOUR), calendar.get(Calendar.MINUTE), false).show();
+    }
+
+    public void clear(View v) {
+        Intent i = new Intent(MainActivity.this, DataStorage.class);
+        i.putExtra("type", "location");
+        i.putExtra("action", "clear");
+        startService(i);
     }
 
     public void registerTasks() {
@@ -566,10 +534,10 @@ public class MainActivity extends AppCompatActivity {
             try {
                 CheckBox box = (CheckBox)findViewById(R.id.checkBox);
 
-                if (checked) {
+                if (type == 0) {
                     ParticleCloudSDK.getCloud().publishEvent(selectedBoard.substring(selectedBoard.indexOf('-') + 1), selectedTask.substring(selectedTask.indexOf('-') + 1) + ";", ParticleEventVisibility.PRIVATE, 60);
                 }
-                else {
+                else if (type == 1) {
                     Date dt = new Date();
                     List<String> timeData = Arrays.asList(dt.toString().split(" "));
                     List<String> components = Arrays.asList(timeData.get(3).split(":"));
@@ -586,6 +554,19 @@ public class MainActivity extends AppCompatActivity {
                     i.putExtra("time", sHour + ":" + sMinute);
                     startService(i);
 //                    ParticleCloudSDK.getCloud().publishEvent(selectedBoard.substring(selectedBoard.indexOf('-') + 1), (selectedTask.substring(selectedTask.indexOf('-') + 1) + ";" + sHour + ":" + sMinute), ParticleEventVisibility.PRIVATE, 60);
+                }
+                else {
+                    String[] coords = coordinates.split(" ");
+
+                    String lon = coords[0];
+                    String lat = coords[1];
+
+                    String dataToStore = dataPhase1 + "`" + lon + "`" + lat + "~";
+
+                    Intent i = new Intent(MainActivity.this, LocationCheck2.class);
+                    i.putExtra("task", "add");
+                    i.putExtra("data", dataToStore);
+                    startService(i);
                 }
 
             } catch (ParticleCloudException e) {
