@@ -57,6 +57,12 @@
         <service
             android:name=".DataStorage"
             android:exported="false"></service>
+
+        <service
+            android:name=".LocationCheck2"
+            android:enabled="true"
+            android:exported="true">
+        </service>
     </application>
 
 </manifest>
