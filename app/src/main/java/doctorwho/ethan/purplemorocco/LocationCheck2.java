@@ -29,6 +29,8 @@ import java.util.List;
 
 import io.particle.android.sdk.cloud.ParticleCloudSDK;
 
+import static java.lang.System.in;
+
 
 public class LocationCheck2 extends Service implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
     GoogleApiClient googleApiClient = null;
@@ -45,6 +47,41 @@ public class LocationCheck2 extends Service implements GoogleApiClient.Connectio
         Log.e("", "");
         String newData = "";
         String dataToDelete = "";
+
+        if (!googleApiClient.isConnected()) {
+            googleApiClient.connect();
+        }
+
+        SharedPreferences prefs = this.getSharedPreferences("com.doctorwho.ethan", Context.MODE_PRIVATE);
+        String dateTimeKey = "com.doctorwho.ethan.geofences";
+        String allLocations = prefs.getString(dateTimeKey, "");
+
+        List<String> locationList = Arrays.asList(allLocations.split("~"));
+        List<String> idList = new ArrayList<>();
+
+        if (allLocations != "") {
+            for (String s : locationList) {
+                List<String> components = Arrays.asList(s.split("`"));
+                String boardName = components.get(1);
+                String taskName = components.get(2);
+                String longitude = components.get(3);
+                String latitude = components.get(4);
+
+                String originalId = boardName + "~" + taskName + "~" + longitude + "~" + latitude;
+                idList.add(originalId);
+            }
+
+            if (!googleApiClient.isConnected()) {
+            } else {
+                LocationServices.GeofencingApi.removeGeofences(googleApiClient, idList);
+            }
+        }
+
+        List<String> locationsFull = new ArrayList<>();
+        for (String s : locationList) {
+            locationsFull.add(s);
+        }
+
         if (!intent.hasExtra("task")) {
         }
         else if (intent.hasExtra("task") && intent.getStringExtra("task").equals("add")) {
@@ -53,6 +90,9 @@ public class LocationCheck2 extends Service implements GoogleApiClient.Connectio
             i.putExtra("type", "location");
             i.putExtra("action", "add");
             newData = intent.getStringExtra("data");
+
+            locationsFull.add(newData);
+
             startService(i);
         }
         else if (intent.hasExtra("task") && intent.getStringExtra("task").equals("remove")) {
@@ -61,45 +101,48 @@ public class LocationCheck2 extends Service implements GoogleApiClient.Connectio
             i.putExtra("type", "location");
             i.putExtra("action", "remove");
             dataToDelete = intent.getStringExtra("data");
+
+            List<String> deletion = new ArrayList<>();
+            deletion.add(dataToDelete);
+            LocationServices.GeofencingApi.removeGeofences(googleApiClient, deletion);
+
+            List<String> components = Arrays.asList(dataToDelete.split("~"));
+            dataToDelete = "0`" + components.get(0) + "`" + components.get(1) + "`" + components.get(2) + "`" + components.get(3);
+
+            try {
+                locationsFull.remove(dataToDelete);
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+            }
+
             startService(i);
         }
 
-        SharedPreferences prefs = this.getSharedPreferences("com.doctorwho.ethan", Context.MODE_PRIVATE);
-        String dateTimeKey = "com.doctorwho.ethan.geofences";
-        String locations = prefs.getString(dateTimeKey, "");
-
-        List<String> all = Arrays.asList(locations.split("~"));
-        List<String> newStrings = new ArrayList<>();
-
-        try {
-            newStrings.add(newData);
-        }
-        catch (Exception e) {
-            e.printStackTrace();
+        String locations = "";
+        for (String s : locationsFull) {
+            locations += (s + "~");
         }
 
-        try {
-            newStrings.remove(dataToDelete.substring(0, dataToDelete.length() - 2));
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        if (!newStrings.get(0).equals("")) {
-            for (String s : newStrings) {
-                locations += s;
-            }
-        }
-
-        if (locations.equals("")) { }
+        if (locations.equals("") || locations.equals("")) { }
         else {
             List<String> data = Arrays.asList(locations.split("~"));
             for (String s : data) {
-                List<String> components = Arrays.asList(s.split("`"));
-                String boardName = components.get(1);
-                String taskName = components.get(2);
-                String longitude = components.get(3);
-                String latitude = components.get(4);
+                String boardName;
+                String taskName;
+                String longitude;
+                String latitude;
+
+                try {
+                    List<String> components = Arrays.asList(s.split("`"));
+                    boardName = components.get(1);
+                    taskName = components.get(2);
+                    longitude = components.get(3);
+                    latitude = components.get(4);
+                }
+                catch (Exception e) {
+                    break;
+                }
 
                 String rId = boardName + "~" + taskName + "~" + longitude + "~" + latitude;
 
@@ -107,8 +150,7 @@ public class LocationCheck2 extends Service implements GoogleApiClient.Connectio
                         .setRequestId(rId)
                         .setCircularRegion(Double.parseDouble(longitude), Double.parseDouble(latitude), 100)
                         .setExpirationDuration(Geofence.NEVER_EXPIRE)
-                        .setNotificationResponsiveness(1000)
-                        .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER)
+                        .setNotificationResponsiveness(1000).setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER)
                         .build();
 
                 final GeofencingRequest geofenceRequest = new GeofencingRequest.Builder()
@@ -121,23 +163,21 @@ public class LocationCheck2 extends Service implements GoogleApiClient.Connectio
 
                 //googleApiClient.connect();
                 if (!googleApiClient.isConnected()) {
-                    if (!googleApiClient.isConnected()) {
-                        Log.i("Service", "GoogleApiClient is not connected");
-                    } else {
-                        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                        }
-                        LocationServices.GeofencingApi.addGeofences(googleApiClient, geofenceRequest, pendingIntent)
-                                .setResultCallback(new ResultCallback<Status>() {
-                                    @Override
-                                    public void onResult(@NonNull Status status) {
-                                        if (status.isSuccess()) {
-                                            Log.i("Service", "Added geofence");
-                                        } else {
-                                            Log.i("Service", "Geofence failed");
-                                        }
-                                    }
-                                });
+                    Log.i("Service", "GoogleApiClient is not connected");
+                } else {
+                    if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                     }
+                    LocationServices.GeofencingApi.addGeofences(googleApiClient, geofenceRequest, pendingIntent)
+                            .setResultCallback(new ResultCallback<Status>() {
+                                @Override
+                                public void onResult(@NonNull Status status) {
+                                    if (status.isSuccess()) {
+                                        Log.i("Service", "Added geofence");
+                                    } else {
+                                        Log.i("Service", "Geofence failed");
+                                    }
+                                }
+                            });
                 }
             }
         }

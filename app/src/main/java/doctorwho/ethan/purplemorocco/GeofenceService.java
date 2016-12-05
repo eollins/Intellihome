@@ -70,7 +70,7 @@ public class GeofenceService extends IntentService {
                 String requestId = geofence.getRequestId();
 
                 List<String> components = Arrays.asList(requestId.split("~"));
-                String boardName = components.get(0).substring(components.get(0).indexOf('-'));
+                String boardName = components.get(0).substring(components.get(0).indexOf('-') + 1);
                 String taskName = components.get(1);
 
                 String taskFull = taskName + ";";

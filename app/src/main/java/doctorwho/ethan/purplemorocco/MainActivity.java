@@ -92,7 +92,7 @@ public class MainActivity extends AppCompatActivity {
     String selectedBoard;
     String selectedTask;
 
-    List boards = new ArrayList<>();
+    List<String> boards = new ArrayList<>();
 
     Spinner dropdown = null;
 
@@ -194,15 +194,22 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        dropdown = (Spinner)findViewById(R.id.boardSpinner);
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, boards);
-        dropdown.setAdapter(adapter);
+//        List<String> newBoards = new ArrayList<>();
+//        for (String s3 : boards) {
+//            String s2 = s3.toString();
+//            s2 = s2.substring(s2.indexOf("-") + 1);
+//            newBoards.add(s2);
+//        }
 
-        dropdown.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+        final Spinner dropdown6 = (Spinner)findViewById(R.id.boardSpinner);
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, boards);
+        dropdown6.setAdapter(adapter);
+
+        dropdown6.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
                 updateTasks(position - 1);
-                selectedBoard = dropdown.getSelectedItem().toString();
+                selectedBoard = dropdown6.getSelectedItem().toString();
 
                 if (position == 0) {
                     send.setEnabled(false);
@@ -338,7 +345,14 @@ public class MainActivity extends AppCompatActivity {
 
         Spinner dropdown3 = (Spinner)findViewById(R.id.boardSpinner);
 
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, boards);
+        List<String> newBoards = new ArrayList<>();
+        for (Object s : boards) {
+            String s2 = s.toString();
+            s2 = s2.substring(s2.indexOf("-") + 1);
+            newBoards.add(s2);
+        }
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, newBoards);
         dropdown3.setAdapter(adapter);
 
 //        Spinner dropdown2 = (Spinner)findViewById(R.id.taskSpinner);
