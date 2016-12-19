@@ -242,21 +242,6 @@ public class MainActivity extends AppCompatActivity {
             }
 
         });
-
-        try {
-            FileOutputStream fos = openFileOutput("Locations.txt", Context.MODE_PRIVATE);
-            OutputStreamWriter osw = new OutputStreamWriter(fos);
-
-            osw.write("");
-            osw.flush();
-            osw.close();
-
-        } catch (FileNotFoundException e) {
-            //catch errors opening file
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     @Override

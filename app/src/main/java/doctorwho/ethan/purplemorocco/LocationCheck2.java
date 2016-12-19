@@ -48,6 +48,29 @@ public class LocationCheck2 extends Service implements GoogleApiClient.Connectio
         String newData = "";
         String dataToDelete = "";
 
+        googleApiClient = null;
+
+        googleApiClient = new GoogleApiClient.Builder(LocationCheck2.this)
+                .addApi(LocationServices.API)
+                .addConnectionCallbacks(new GoogleApiClient.ConnectionCallbacks() {
+                    @Override
+                    public void onConnected(Bundle bundle) {
+                        Log.i("Service", "Connected to GoogleApiClient");
+                    }
+
+                    @Override
+                    public void onConnectionSuspended(int i) {
+                        Log.i("Service", "Suspended connection to GoogleApiClient");
+                    }
+                })
+                .addOnConnectionFailedListener(new GoogleApiClient.OnConnectionFailedListener() {
+                    @Override
+                    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+                        Log.i("Service", "Connection failed");
+                    }
+                })
+                .build();
+
         if (!googleApiClient.isConnected()) {
             googleApiClient.connect();
         }
@@ -74,6 +97,7 @@ public class LocationCheck2 extends Service implements GoogleApiClient.Connectio
             if (!googleApiClient.isConnected()) {
             } else {
                 LocationServices.GeofencingApi.removeGeofences(googleApiClient, idList);
+                Log.i("idList", String.valueOf(idList));
             }
         }
 
@@ -118,6 +142,8 @@ public class LocationCheck2 extends Service implements GoogleApiClient.Connectio
 
             startService(i);
         }
+
+        locationsFull.remove("");
 
         String locations = "";
         for (String s : locationsFull) {
