@@ -48,7 +48,7 @@ public class LocationCheck2 extends Service implements GoogleApiClient.Connectio
         String newData = "";
         String dataToDelete = "";
 
-        googleApiClient = null;
+
 
         googleApiClient = new GoogleApiClient.Builder(LocationCheck2.this)
                 .addApi(LocationServices.API)
