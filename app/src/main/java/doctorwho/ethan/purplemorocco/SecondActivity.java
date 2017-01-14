@@ -26,9 +26,12 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
+import io.particle.android.sdk.utils.Toaster;
+
 public class SecondActivity extends AppCompatActivity {
     List<String> timeList;
     List<String> locationList;
+    List<String> identifierList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,11 +41,14 @@ public class SecondActivity extends AppCompatActivity {
         SharedPreferences prefs = this.getSharedPreferences("com.doctorwho.ethan", Context.MODE_PRIVATE);
         String timeKey = "com.doctorwho.ethan.times";
         String locationKey = "com.doctorwho.ethan.geofences";
+        String identifierKey = "com.doctorwho.ethan.retiredidentifiers";
         String times = prefs.getString(timeKey, "");
         String locations = prefs.getString(locationKey, "");
+        String identifiers = prefs.getString(identifierKey, "");
 
         timeList = Arrays.asList(times.split("`"));
-        locationList = Arrays.asList(locations.split("`"));
+        locationList = Arrays.asList(locations.split("~"));
+        identifierList = Arrays.asList(identifiers.split("-"));
 
         String[] options = { "Time-Based", "Location-Based "};
         final Spinner dropdown2 = (Spinner)findViewById(R.id.spinner2);
@@ -66,6 +72,28 @@ public class SecondActivity extends AppCompatActivity {
                     }
 
                     ArrayAdapter<String> adapter = new ArrayAdapter<String>(getApplicationContext(), R.layout.support_simple_spinner_dropdown_item, total);
+                    adapter.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item);
+                    spinner.setAdapter(adapter);
+                }
+                else {
+                    List<String> activeLocations = new ArrayList<String>();
+                    List<String> inactiveLocations = new ArrayList<String>();
+
+                    for (String location : locationList) {
+                        List<String> components = Arrays.asList(location.split("`"));
+                        String identifier = components.get(0);
+                        Toaster.s(SecondActivity.this, identifier);
+
+                        if (identifierList.contains(identifier)) {
+                            inactiveLocations.add(location);
+                        }
+                        else {
+                            activeLocations.add(location);
+                        }
+                    }
+
+                    Spinner spinner = (Spinner)findViewById(R.id.spinner3);
+                    ArrayAdapter<String> adapter = new ArrayAdapter<String>(getApplicationContext(), R.layout.support_simple_spinner_dropdown_item, activeLocations);
                     adapter.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item);
                     spinner.setAdapter(adapter);
                 }
