@@ -48,29 +48,6 @@ public class LocationCheck2 extends Service implements GoogleApiClient.Connectio
         String newData = "";
         String dataToDelete = "";
 
-
-
-        googleApiClient = new GoogleApiClient.Builder(LocationCheck2.this)
-                .addApi(LocationServices.API)
-                .addConnectionCallbacks(new GoogleApiClient.ConnectionCallbacks() {
-                    @Override
-                    public void onConnected(Bundle bundle) {
-                        Log.i("Service", "Connected to GoogleApiClient");
-                    }
-
-                    @Override
-                    public void onConnectionSuspended(int i) {
-                        Log.i("Service", "Suspended connection to GoogleApiClient");
-                    }
-                })
-                .addOnConnectionFailedListener(new GoogleApiClient.OnConnectionFailedListener() {
-                    @Override
-                    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-                        Log.i("Service", "Connection failed");
-                    }
-                })
-                .build();
-
         if (!googleApiClient.isConnected()) {
             googleApiClient.connect();
         }
@@ -158,9 +135,11 @@ public class LocationCheck2 extends Service implements GoogleApiClient.Connectio
                 String taskName;
                 String longitude;
                 String latitude;
+                String identifier;
 
                 try {
                     List<String> components = Arrays.asList(s.split("`"));
+                    identifier = components.get(0);
                     boardName = components.get(1);
                     taskName = components.get(2);
                     longitude = components.get(3);
@@ -170,7 +149,11 @@ public class LocationCheck2 extends Service implements GoogleApiClient.Connectio
                     break;
                 }
 
-                String rId = boardName + "~" + taskName + "~" + longitude + "~" + latitude;
+                String rId = identifier + "~" + boardName + "~" + taskName + "~" + longitude + "~" + latitude;
+
+                String identifierKey = "com.doctorwho.ethan.identifiers";
+                String identifiers = prefs.getString(identifierKey, "");
+                prefs.edit().putString(identifierKey, identifiers + (identifier + "-")).apply();
 
                 final Geofence geofence = new Geofence.Builder()
                         .setRequestId(rId)
@@ -187,7 +170,7 @@ public class LocationCheck2 extends Service implements GoogleApiClient.Connectio
                 Log.e("", "");
                 PendingIntent pendingIntent = PendingIntent.getService(LocationCheck2.this, 0, i, PendingIntent.FLAG_UPDATE_CURRENT);
 
-                //googleApiClient.connect();
+                //googleApiClient.connect(); 0
                 if (!googleApiClient.isConnected()) {
                     Log.i("Service", "GoogleApiClient is not connected");
                 } else {

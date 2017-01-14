@@ -57,6 +57,12 @@ public class DataStorage extends IntentService {
             else if(action.equals("clear")) {
                 String dateTimeKey = "com.doctorwho.ethan.geofences";
                 prefs.edit().putString(dateTimeKey, "").apply();
+
+                String identifierKey = "com.doctorwho.ethan.identifiers";
+                prefs.edit().putString(identifierKey, "").apply();
+
+                String retiredIdentifierKey = "com.doctorwho.ethan.retiredidentifiers";
+                prefs.edit().putString(retiredIdentifierKey, "").apply();
             }
         }
     }

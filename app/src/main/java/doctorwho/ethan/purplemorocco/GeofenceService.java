@@ -5,6 +5,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
@@ -70,8 +71,23 @@ public class GeofenceService extends IntentService {
                 String requestId = geofence.getRequestId();
 
                 List<String> components = Arrays.asList(requestId.split("~"));
-                String boardName = components.get(0).substring(components.get(0).indexOf('-') + 1);
-                String taskName = components.get(1);
+                String boardName = components.get(1).substring(components.get(1).indexOf('-') + 1);
+                String taskName = components.get(2);
+
+                String identifier = components.get(0);
+
+                SharedPreferences prefs = this.getSharedPreferences("com.doctorwho.ethan", Context.MODE_PRIVATE);
+                String dateTimeKey = "com.doctorwho.ethan.retiredidentifiers";
+                String identifiers = prefs.getString(dateTimeKey, "");
+
+                List identifierList = Arrays.asList(identifiers.split("-"));
+                if (identifierList.contains(identifier)) {
+                    return;
+                }
+
+                String retiredIdentifierKey = "com.doctorwho.ethan.retiredidentifiers";
+                String retiredIdentifiers = prefs.getString(retiredIdentifierKey, "");
+                prefs.edit().putString(retiredIdentifierKey, retiredIdentifiers + (identifier + "-")).apply();
 
                 String taskFull = taskName + ";";
 

@@ -376,7 +376,9 @@ public class MainActivity extends AppCompatActivity {
         }
         else {
             type = 2;
-            dataPhase1 = "0" + "`" + boardSpinner.getSelectedItem().toString() + "`" + taskSpinner.getSelectedItem().toString();
+
+            String identifier = generateIdentifier();
+            dataPhase1 = identifier + "`" + boardSpinner.getSelectedItem().toString() + "`" + taskSpinner.getSelectedItem().toString();
         }
 
         new sendTask().execute();
@@ -598,6 +600,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+
     char[] characters = new char[]{'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P' , 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
     public String generateIdentifier() {
         boolean confirmed = false;
@@ -608,9 +611,20 @@ public class MainActivity extends AppCompatActivity {
                 full += characters[(int )(Math.random() * 62 + 0)];
             }
 
-            //if full is taken, redo
-            //if full is free, save, break and return
+            SharedPreferences prefs = this.getSharedPreferences("com.doctorwho.ethan", Context.MODE_PRIVATE);
+            String dateTimeKey = "com.doctorwho.ethan.identifiers";
+            String identifiers = prefs.getString(dateTimeKey, "");
+
+            List identifierList = Arrays.asList(identifiers.split("-"));
+            if (identifierList.contains(full)) {
+                full = "";
+            }
+            else {
+                confirmed = true;
+            }
         }
+
+        return full;
     }
 }
 
