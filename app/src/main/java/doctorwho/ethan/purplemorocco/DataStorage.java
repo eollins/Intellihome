@@ -4,6 +4,7 @@ import android.app.IntentService;
 import android.content.Intent;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.widget.Spinner;
 
 import java.util.Arrays;
 import java.util.List;
@@ -63,6 +64,19 @@ public class DataStorage extends IntentService {
 
                 String retiredIdentifierKey = "com.doctorwho.ethan.retiredidentifiers";
                 prefs.edit().putString(retiredIdentifierKey, "").apply();
+            }
+            else if (action.equals("disable")) {
+                String timeKey = "com.doctorwho.ethan.times";
+                String locationKey = "com.doctorwho.ethan.geofences";
+                String identifierKey = "com.doctorwho.ethan.retiredidentifiers";
+                String times = prefs.getString(timeKey, "");
+                String locations = prefs.getString(locationKey, "");
+                String identifiers = prefs.getString(identifierKey, "");
+
+                List<String> components = Arrays.asList(data.split("`"));
+                String identifier = components.get(0);
+                identifiers += identifier + "-";
+                prefs.edit().putString(identifierKey, identifiers);
             }
         }
     }

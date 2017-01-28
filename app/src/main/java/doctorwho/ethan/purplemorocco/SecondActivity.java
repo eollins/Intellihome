@@ -2,6 +2,7 @@ package doctorwho.ethan.purplemorocco;
 
 import android.app.ListActivity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Address;
 import android.location.Geocoder;
@@ -217,31 +218,38 @@ public class SecondActivity extends AppCompatActivity {
 
 
     public void remove(View v) {
-        SharedPreferences prefs = this.getSharedPreferences("com.doctorwho.ethan", Context.MODE_PRIVATE);
-        String timeKey = "com.doctorwho.ethan.times";
-        String locationKey = "com.doctorwho.ethan.geofences";
-        String identifierKey = "com.doctorwho.ethan.retiredidentifiers";
-        String times = prefs.getString(timeKey, "");
-        String locations = prefs.getString(locationKey, "");
-        String identifiers = prefs.getString(identifierKey, "");
-
-        Spinner one = (Spinner)findViewById(R.id.spinner2);
         Spinner two = (Spinner)findViewById(R.id.spinner3);
 
-        if (one.getSelectedItemPosition() == 0) {
-            //time removal goes here
-        }
-        else {
-            String location = displayedLocations.get(two.getSelectedItemPosition());
-            List<String> components = Arrays.asList(location.split("`"));
-            String identifier = components.get(0);
-            identifiers += identifier + "-";
-            prefs.edit().putString(identifierKey, identifiers);
-            int currentIndex = two.getSelectedItemPosition();
-            displayedLocations.remove(location);
-            one.setSelection(-1);
-            one.setSelection(1);
-            two.setSelection(currentIndex);
-        }
+        Intent i = new Intent(SecondActivity.this, DataStorage.class);
+        i.putExtra("type", "location");
+        i.putExtra("action", "disable");
+        i.putExtra("data", displayedLocations.get(two.getSelectedItemPosition()));
+
+//        SharedPreferences prefs = this.getSharedPreferences("com.doctorwho.ethan", Context.MODE_PRIVATE);
+//        String timeKey = "com.doctorwho.ethan.times";
+//        String locationKey = "com.doctorwho.ethan.geofences";
+//        String identifierKey = "com.doctorwho.ethan.retiredidentifiers";
+//        String times = prefs.getString(timeKey, "");
+//        String locations = prefs.getString(locationKey, "");
+//        String identifiers = prefs.getString(identifierKey, "");
+//
+//        Spinner one = (Spinner)findViewById(R.id.spinner2);
+//        Spinner two = (Spinner)findViewById(R.id.spinner3);
+//
+//        if (one.getSelectedItemPosition() == 0) {
+//            //time removal goes here
+//        }
+//        else {
+//            String location = displayedLocations.get(two.getSelectedItemPosition());
+//            List<String> components = Arrays.asList(location.split("`"));
+//            String identifier = components.get(0);
+//            identifiers += identifier + "-";
+//            prefs.edit().putString(identifierKey, identifiers);
+//            int currentIndex = two.getSelectedItemPosition();
+//            displayedLocations.remove(location);
+//            one.setSelection(-1);
+//            one.setSelection(1);
+//            two.setSelection(currentIndex);
+//        }
     }
 }

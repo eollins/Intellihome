@@ -473,11 +473,15 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void subscriptionEvent(String info, String data, String name, String tasks) {
+    public void subscriptionEvent(String info, String data, String name, String tasks, String boardID) {
         int boardId = boards.size() - 1;
 
         boards.add(boardId + "-" + name);
         String[] taskArray = tasks.split(",");
+
+        SharedPreferences prefs = this.getSharedPreferences("com.doctorwho.ethan", Context.MODE_PRIVATE);
+        String boardIDKey = "com.doctorwho.ethan.authorizedBoards";
+        String authorizedBoards = prefs.getString(boardIDKey, "");
 
         for (int i = 0; i < taskArray.length; i++) {
             newTasks.add(boardId + "-" + taskArray[i]);
@@ -513,9 +517,10 @@ public class MainActivity extends AppCompatActivity {
                                 String info = event.dataPayload;
                                 String data = info.substring(info.indexOf(':') + 1);
                                 String name = data.substring(data.indexOf('=') + 1, data.indexOf(';'));
-                                String tasks = data.substring(data.indexOf(';') + 1);
+                                String tasks = data.substring(data.indexOf(';') + 1, data.indexOf('~'));
+                                String boardID = data.substring(data.indexOf('~') + 1);
 
-                                subscriptionEvent(info, data, name, tasks);
+                                subscriptionEvent(info, data, name, tasks, boardID);
                             }
 
                             public void onEventError(Exception e) {
