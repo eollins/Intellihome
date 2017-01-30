@@ -83,41 +83,43 @@ public class LocationCheck2 extends Service implements GoogleApiClient.Connectio
             locationsFull.add(s);
         }
 
-        if (!intent.hasExtra("task")) {
-        }
-        else if (intent.hasExtra("task") && intent.getStringExtra("task").equals("add")) {
-            Intent i = new Intent(LocationCheck2.this, DataStorage.class);
-            i.putExtra("data", intent.getStringExtra("data"));
-            i.putExtra("type", "location");
-            i.putExtra("action", "add");
-            newData = intent.getStringExtra("data");
+        try {
+            if (!intent.hasExtra("task")) {
+            } else if (intent.hasExtra("task") && intent.getStringExtra("task").equals("add")) {
+                Intent i = new Intent(LocationCheck2.this, DataStorage.class);
+                i.putExtra("data", intent.getStringExtra("data"));
+                i.putExtra("type", "location");
+                i.putExtra("action", "add");
+                newData = intent.getStringExtra("data");
 
-            locationsFull.add(newData);
+                locationsFull.add(newData);
 
-            startService(i);
-        }
-        else if (intent.hasExtra("task") && intent.getStringExtra("task").equals("remove")) {
-            Intent i = new Intent(LocationCheck2.this, DataStorage.class);
-            i.putExtra("data", intent.getStringExtra("data"));
-            i.putExtra("type", "location");
-            i.putExtra("action", "remove");
-            dataToDelete = intent.getStringExtra("data");
+                startService(i);
+            } else if (intent.hasExtra("task") && intent.getStringExtra("task").equals("remove")) {
+                Intent i = new Intent(LocationCheck2.this, DataStorage.class);
+                i.putExtra("data", intent.getStringExtra("data"));
+                i.putExtra("type", "location");
+                i.putExtra("action", "remove");
+                dataToDelete = intent.getStringExtra("data");
 
-            List<String> deletion = new ArrayList<>();
-            deletion.add(dataToDelete);
-            LocationServices.GeofencingApi.removeGeofences(googleApiClient, deletion);
+                List<String> deletion = new ArrayList<>();
+                deletion.add(dataToDelete);
+                LocationServices.GeofencingApi.removeGeofences(googleApiClient, deletion);
 
-            List<String> components = Arrays.asList(dataToDelete.split("~"));
-            dataToDelete = "0`" + components.get(0) + "`" + components.get(1) + "`" + components.get(2) + "`" + components.get(3);
+                List<String> components = Arrays.asList(dataToDelete.split("~"));
+                dataToDelete = "0`" + components.get(0) + "`" + components.get(1) + "`" + components.get(2) + "`" + components.get(3);
 
-            try {
-                locationsFull.remove(dataToDelete);
+                try {
+                    locationsFull.remove(dataToDelete);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+                startService(i);
             }
-            catch (Exception e) {
-                e.printStackTrace();
-            }
-
-            startService(i);
+        }
+        catch (Exception e) {
+            e.printStackTrace();
         }
 
         locationsFull.remove("");

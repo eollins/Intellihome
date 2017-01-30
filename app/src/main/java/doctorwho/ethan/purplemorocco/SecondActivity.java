@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Address;
 import android.location.Geocoder;
+import android.provider.ContactsContract;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -68,7 +69,9 @@ public class SecondActivity extends AppCompatActivity {
             @Override
             public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
                 if (dropdown2.getSelectedItemPosition() == 0) {
-
+                    if (timeList.size() != 0) {
+                        timeInfo();
+                    }
                 }
                 else {
                     info();
@@ -94,8 +97,16 @@ public class SecondActivity extends AppCompatActivity {
                     Spinner spinner = (Spinner)findViewById(R.id.spinner3);
                     ArrayList<String> total = new ArrayList<>();
 
-                    for (int i = 0; i < timeList.size(); i++) {
-                        total.add(timeList.get(i));
+                    try {
+                        for (int i = 0; i < timeList.size(); i++) {
+                            String time = timeList.get(i);
+                            List<String> components = Arrays.asList(time.split("~"));
+                            String full = components.get(1) + " at " + components.get(2);
+                            total.add(full);
+                        }
+                    }
+                    catch (Exception e) {
+                        e.printStackTrace();
                     }
 
                     final Spinner dropdown3 = (Spinner)findViewById(R.id.spinner3);
@@ -141,7 +152,9 @@ public class SecondActivity extends AppCompatActivity {
                         }
                     }
 
-                    info();
+                    if (displayedLocations.size() != 0) {
+                        info();
+                    }
 
                     String[] selections = { "" };
                     final Spinner dropdown3 = (Spinner)findViewById(R.id.spinner3);
@@ -164,6 +177,10 @@ public class SecondActivity extends AppCompatActivity {
     }
 
     public void info() {
+        if (displayedLocations.size() == 0) {
+            return;
+        }
+
         Spinner s = (Spinner)findViewById(R.id.spinner3);
         String info = displayedLocations.get(s.getSelectedItemPosition());
         List<String> components = Arrays.asList(info.split("`"));
@@ -213,43 +230,52 @@ public class SecondActivity extends AppCompatActivity {
         }
 
         TextView t = (TextView)findViewById(R.id.textView6);
+        t.setTextSize(20f);
         t.setText(components.get(1).substring(components.get(1).indexOf('-') + 1) + "\n" + components.get(2) + "\n" + address + "\n" + city + ", " + state + " " + postalCode + "\n" + country + "\n" + status);
     }
 
+    public void timeInfo() {
+        Spinner s = (Spinner)findViewById(R.id.spinner3);
+        String info = timeList.get(s.getSelectedItemPosition());
+        List<String> components = Arrays.asList(info.split("~"));
+
+        TextView t = (TextView)findViewById(R.id.textView6);
+        t.setText(components.get(0) + "\n" + components.get(1) + "\n" + components.get(2));
+        t.setTextSize(35f);
+    }
 
     public void remove(View v) {
-        Spinner two = (Spinner)findViewById(R.id.spinner3);
+        Spinner s = (Spinner)findViewById(R.id.spinner2);
+        Spinner d = (Spinner)findViewById(R.id.spinner3);
 
-        Intent i = new Intent(SecondActivity.this, DataStorage.class);
-        i.putExtra("type", "location");
-        i.putExtra("action", "disable");
-        i.putExtra("data", displayedLocations.get(two.getSelectedItemPosition()));
+        if (s.getSelectedItemPosition() == 0) {
+            Intent i = new Intent(SecondActivity.this, DataStorage.class);
+            i.putExtra("type", "time");
+            i.putExtra("action", "remove");
+            i.putExtra("data", timeList.get(d.getSelectedItemPosition()));
+            startService(i);
 
-//        SharedPreferences prefs = this.getSharedPreferences("com.doctorwho.ethan", Context.MODE_PRIVATE);
-//        String timeKey = "com.doctorwho.ethan.times";
-//        String locationKey = "com.doctorwho.ethan.geofences";
-//        String identifierKey = "com.doctorwho.ethan.retiredidentifiers";
-//        String times = prefs.getString(timeKey, "");
-//        String locations = prefs.getString(locationKey, "");
-//        String identifiers = prefs.getString(identifierKey, "");
-//
-//        Spinner one = (Spinner)findViewById(R.id.spinner2);
-//        Spinner two = (Spinner)findViewById(R.id.spinner3);
-//
-//        if (one.getSelectedItemPosition() == 0) {
-//            //time removal goes here
-//        }
-//        else {
-//            String location = displayedLocations.get(two.getSelectedItemPosition());
-//            List<String> components = Arrays.asList(location.split("`"));
-//            String identifier = components.get(0);
-//            identifiers += identifier + "-";
-//            prefs.edit().putString(identifierKey, identifiers);
-//            int currentIndex = two.getSelectedItemPosition();
-//            displayedLocations.remove(location);
-//            one.setSelection(-1);
-//            one.setSelection(1);
-//            two.setSelection(currentIndex);
-//        }
+            s.setSelection(1);
+            s.setSelection(0);
+        }
+        else {
+            Intent i = new Intent(SecondActivity.this, DataStorage.class);
+            i.putExtra("type", "location");
+            i.putExtra("action", "remove");
+            i.putExtra("data", displayedLocations.get(d.getSelectedItemPosition()));
+            startService(i);
+
+            Intent i2 = new Intent(SecondActivity.this, DataStorage.class);
+            i.putExtra("type", "location");
+            i.putExtra("action", "disable");
+            i.putExtra("data", displayedLocations.get(d.getSelectedItemPosition()));
+            startService(i2);
+
+            s.setSelection(0);
+            s.setSelection(1);
+        }
+
+        finish();
+        startActivity(getIntent());
     }
 }
