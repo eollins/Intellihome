@@ -120,7 +120,6 @@ public class SecondActivity extends AppCompatActivity {
                     for (String location : locationList) {
                         List<String> components = Arrays.asList(location.split("`"));
                         String identifier = components.get(0);
-                        Toaster.s(SecondActivity.this, identifier);
 
                         if (identifierList.contains(identifier)) {
                             inactiveLocations.add(location);
@@ -177,61 +176,60 @@ public class SecondActivity extends AppCompatActivity {
     }
 
     public void info() {
-        if (displayedLocations.size() == 0) {
-            return;
-        }
-
-        Spinner s = (Spinner)findViewById(R.id.spinner3);
-        String info = displayedLocations.get(s.getSelectedItemPosition());
-        List<String> components = Arrays.asList(info.split("`"));
-
-        Geocoder geocoder;
-        List<Address> addresses;
-        geocoder = new Geocoder(SecondActivity.this, Locale.getDefault());
-
-        boolean active = false;
-        String identifier = components.get(0);
-        SharedPreferences prefs = this.getSharedPreferences("com.doctorwho.ethan", Context.MODE_PRIVATE);
-        String identifierKey = "com.doctorwho.ethan.retiredidentifiers";
-        String identifiers = prefs.getString(identifierKey, "");
-        List<String> retiredIdentifiers = Arrays.asList(identifiers.split("-"));
-        if (retiredIdentifiers.contains(identifier)) {
-            active = false;
-        }
-        else {
-            active = true;
-        }
-
-        String address = "";
-        String city = "";
-        String state = "";
-        String country = "";
-        String postalCode = "";
-
         try {
-            addresses = geocoder.getFromLocation(Double.parseDouble(components.get(3)), Double.parseDouble(components.get(4)), 1); // Here 1 represent max location result to returned, by documents it recommended 1 to 5
+            Spinner s = (Spinner) findViewById(R.id.spinner3);
+            String info = displayedLocations.get(s.getSelectedItemPosition());
+            List<String> components = Arrays.asList(info.split("`"));
 
-            address = addresses.get(0).getAddressLine(0); // If any additional address line present than only, check with max available address lines by getMaxAddressLineIndex()
-            city = addresses.get(0).getLocality();
-            state = addresses.get(0).getAdminArea();
-            country = addresses.get(0).getCountryName();
-            postalCode = addresses.get(0).getPostalCode();
-            String knownName = addresses.get(0).getFeatureName(); // Only if available else return NULL
-        } catch (Exception e) {
+            Geocoder geocoder;
+            List<Address> addresses;
+            geocoder = new Geocoder(SecondActivity.this, Locale.getDefault());
+
+            boolean active = false;
+            String identifier = components.get(0);
+            SharedPreferences prefs = this.getSharedPreferences("com.doctorwho.ethan", Context.MODE_PRIVATE);
+            String identifierKey = "com.doctorwho.ethan.retiredidentifiers";
+            String identifiers = prefs.getString(identifierKey, "");
+            List<String> retiredIdentifiers = Arrays.asList(identifiers.split("-"));
+            if (retiredIdentifiers.contains(identifier)) {
+                active = false;
+            } else {
+                active = true;
+            }
+
+            String address = "";
+            String city = "";
+            String state = "";
+            String country = "";
+            String postalCode = "";
+
+            try {
+                addresses = geocoder.getFromLocation(Double.parseDouble(components.get(3)), Double.parseDouble(components.get(4)), 1); // Here 1 represent max location result to returned, by documents it recommended 1 to 5
+
+                address = addresses.get(0).getAddressLine(0); // If any additional address line present than only, check with max available address lines by getMaxAddressLineIndex()
+                city = addresses.get(0).getLocality();
+                state = addresses.get(0).getAdminArea();
+                country = addresses.get(0).getCountryName();
+                postalCode = addresses.get(0).getPostalCode();
+                String knownName = addresses.get(0).getFeatureName(); // Only if available else return NULL
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            String status = "";
+            if (active) {
+                status = "Currently Active";
+            } else {
+                status = "No Longer Active";
+            }
+
+            TextView t = (TextView) findViewById(R.id.textView6);
+            t.setTextSize(20f);
+            t.setText(components.get(1).substring(components.get(1).indexOf('-') + 1) + "\n" + components.get(2) + "\n" + address + "\n" + city + ", " + state + " " + postalCode + "\n" + country + "\n" + status);
+        }
+        catch (Exception e) {
             e.printStackTrace();
         }
-
-        String status = "";
-        if (active) {
-            status = "Currently Active";
-        }
-        else {
-            status = "No Longer Active";
-        }
-
-        TextView t = (TextView)findViewById(R.id.textView6);
-        t.setTextSize(20f);
-        t.setText(components.get(1).substring(components.get(1).indexOf('-') + 1) + "\n" + components.get(2) + "\n" + address + "\n" + city + ", " + state + " " + postalCode + "\n" + country + "\n" + status);
     }
 
     public void timeInfo() {
