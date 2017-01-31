@@ -1,6 +1,7 @@
 package doctorwho.ethan.purplemorocco;
 
 import android.app.ListActivity;
+import android.app.TimePickerDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -13,10 +14,12 @@ import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.TimePicker;
 import android.widget.Toast;
 
 import java.io.File;
@@ -25,6 +28,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 
@@ -63,6 +67,28 @@ public class SecondActivity extends AppCompatActivity {
         final Spinner dropdown3 = (Spinner)findViewById(R.id.spinner2);
         ArrayAdapter<String> adapter3 = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, options);
         dropdown3.setAdapter(adapter3);
+
+        Button b = (Button)findViewById(R.id.button6);
+        b.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Calendar mcurrentTime = Calendar.getInstance();
+                final int hour = mcurrentTime.get(Calendar.HOUR_OF_DAY);
+                final int minute = mcurrentTime.get(Calendar.MINUTE);
+                TimePickerDialog mTimePicker;
+                mTimePicker = new TimePickerDialog(SecondActivity.this, new TimePickerDialog.OnTimeSetListener() {
+                    @Override
+                    public void onTimeSet(TimePicker timePicker, int selectedHour, int selectedMinute) {
+                        Toaster.s(SecondActivity.this, "Task rescheduled for " + selectedHour + ":" + selectedMinute);
+                        sHour = selectedHour;
+                        sMinute = selectedMinute;
+                        edit();
+                    }
+                }, hour, minute, false);
+                mTimePicker.setTitle("Edit Time");
+                mTimePicker.show();
+            }
+        });
 
         Spinner s = (Spinner)findViewById(R.id.spinner3);
         s.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -275,5 +301,41 @@ public class SecondActivity extends AppCompatActivity {
 
         finish();
         startActivity(getIntent());
+    }
+
+    int sMinute = 0;
+    int sHour = 0;
+    public void edit() {
+        Spinner one = (Spinner)findViewById(R.id.spinner2);
+        Spinner two = (Spinner)findViewById(R.id.spinner3);
+
+        if (one.getSelectedItemPosition() == 0) {
+            String s = timeList.get(two.getSelectedItemPosition());
+            List<String> components = Arrays.asList(s.split("~"));
+            List<String> finalComponents = new ArrayList<>();
+
+            for (int i = 0; i < components.size(); i++) {
+                finalComponents.add(components.get(i));
+            }
+
+            finalComponents.set(2, sHour + ":" + sMinute);
+
+            String full = finalComponents.get(0) + "•" + finalComponents.get(1) + "•" + finalComponents.get(2);
+
+            Intent i = new Intent(SecondActivity.this, DataStorage.class);
+            i.putExtra("type", "time");
+            i.putExtra("action", "remove");
+            i.putExtra("data", s);
+            startService(i);
+
+            Intent e = new Intent(SecondActivity.this, DataStorage.class);
+            e.putExtra("type", "time");
+            e.putExtra("action", "add");
+            e.putExtra("data", full);
+            startService(e);
+
+            finish();
+            startActivity(getIntent());
+        }
     }
 }

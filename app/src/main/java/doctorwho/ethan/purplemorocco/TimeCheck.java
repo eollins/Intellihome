@@ -66,6 +66,12 @@ public class TimeCheck extends Service {
                         d.putExtra("boardName", attributes.get(0));
                         d.putExtra("taskName", attributes.get(1));
                         startService(d);
+
+                        Intent o = new Intent(TimeCheck.this, DataStorage.class);
+                        o.putExtra("type", "time");
+                        o.putExtra("action", "remove");
+                        o.putExtra("data", attributes.get(0) + "~" + attributes.get(1) + "~" + hour2 + ":" + minute2);
+                        startService(o);
                     }
                 }
             }
