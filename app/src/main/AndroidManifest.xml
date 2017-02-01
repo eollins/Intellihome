@@ -52,17 +52,18 @@
         <receiver
             android:name=".IntentReceiver"
             android:enabled="true"
-            android:exported="true"></receiver>
+            android:exported="true" />
 
         <service
             android:name=".DataStorage"
-            android:exported="false"></service>
-
+            android:exported="false" />
         <service
             android:name=".LocationCheck2"
             android:enabled="true"
-            android:exported="true">
-        </service>
+            android:exported="true" />
+
+        <activity android:name=".Options" />
+        <activity android:name=".Boards"></activity>
     </application>
 
 </manifest>

@@ -256,7 +256,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void optionsClick(View v) {
-        Intent i = new Intent(this, SecondActivity.class);
+        Intent i = new Intent(this, Options.class);
         startActivity(i);
     }
 
