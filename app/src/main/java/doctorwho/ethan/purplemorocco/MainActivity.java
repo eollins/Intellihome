@@ -134,6 +134,11 @@ public class MainActivity extends AppCompatActivity {
         Intent i= new Intent(this, LocationCheck2.class);
         this.startService(i);
 
+//        Intent r = new Intent(MainActivity.this, DataStorage.class);
+//        r.putExtra("type", "location");
+//        r.putExtra("action", "clear");
+//        startService(r);
+
         s.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {

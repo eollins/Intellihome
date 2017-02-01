@@ -1,5 +1,6 @@
 package doctorwho.ethan.purplemorocco;
 
+import android.app.Activity;
 import android.app.ListActivity;
 import android.app.TimePickerDialog;
 import android.content.Context;
@@ -22,6 +23,13 @@ import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
+import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
+import com.google.android.gms.common.GooglePlayServicesRepairableException;
+import com.google.android.gms.location.places.Place;
+import com.google.android.gms.location.places.ui.PlacePicker;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -41,6 +49,10 @@ public class SecondActivity extends AppCompatActivity {
 
     List<String> displayedLocations = new ArrayList<>();
 
+    private static final int PLACE_PICKER_REQUEST = 1;
+    private static final LatLngBounds BOUNDS_MOUNTAIN_VIEW = new LatLngBounds(
+            new LatLng(34, -118), new LatLng(34, -118));
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -58,6 +70,8 @@ public class SecondActivity extends AppCompatActivity {
         locationList = Arrays.asList(locations.split("~"));
         identifierList = Arrays.asList(identifiers.split("-"));
 
+        List<String> retired = new ArrayList<>();
+
         String[] options = { "Time-Based", "Location-Based "};
         final Spinner dropdown2 = (Spinner)findViewById(R.id.spinner2);
         ArrayAdapter<String> adapter2 = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, options);
@@ -72,21 +86,38 @@ public class SecondActivity extends AppCompatActivity {
         b.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Calendar mcurrentTime = Calendar.getInstance();
-                final int hour = mcurrentTime.get(Calendar.HOUR_OF_DAY);
-                final int minute = mcurrentTime.get(Calendar.MINUTE);
-                TimePickerDialog mTimePicker;
-                mTimePicker = new TimePickerDialog(SecondActivity.this, new TimePickerDialog.OnTimeSetListener() {
-                    @Override
-                    public void onTimeSet(TimePicker timePicker, int selectedHour, int selectedMinute) {
-                        Toaster.s(SecondActivity.this, "Task rescheduled for " + selectedHour + ":" + selectedMinute);
-                        sHour = selectedHour;
-                        sMinute = selectedMinute;
-                        edit();
+                Spinner s = (Spinner)findViewById(R.id.spinner2);
+
+                if (s.getSelectedItemPosition() == 0) {
+                    Calendar mcurrentTime = Calendar.getInstance();
+                    final int hour = mcurrentTime.get(Calendar.HOUR_OF_DAY);
+                    final int minute = mcurrentTime.get(Calendar.MINUTE);
+                    TimePickerDialog mTimePicker;
+                    mTimePicker = new TimePickerDialog(SecondActivity.this, new TimePickerDialog.OnTimeSetListener() {
+                        @Override
+                        public void onTimeSet(TimePicker timePicker, int selectedHour, int selectedMinute) {
+                            Toaster.s(SecondActivity.this, "Task rescheduled for " + selectedHour + ":" + selectedMinute);
+                            sHour = selectedHour;
+                            sMinute = selectedMinute;
+                            edit();
+                        }
+                    }, hour, minute, false);
+                    mTimePicker.setTitle("Edit Time");
+                    mTimePicker.show();
+                }
+                else {
+                    try {
+                        PlacePicker.IntentBuilder intentBuilder =
+                                new PlacePicker.IntentBuilder();
+                        intentBuilder.setLatLngBounds(BOUNDS_MOUNTAIN_VIEW);
+                        Intent intent = intentBuilder.build(SecondActivity.this);
+                        startActivityForResult(intent, PLACE_PICKER_REQUEST);
+
+                    } catch (GooglePlayServicesRepairableException
+                            | GooglePlayServicesNotAvailableException e) {
+                        e.printStackTrace();
                     }
-                }, hour, minute, false);
-                mTimePicker.setTitle("Edit Time");
-                mTimePicker.show();
+                }
             }
         });
 
@@ -151,29 +182,34 @@ public class SecondActivity extends AppCompatActivity {
                             inactiveLocations.add(location);
                         }
                         else {
-                            double longitude = Double.parseDouble(components.get(3));
-                            double latitude = Double.parseDouble(components.get(4));
-
-                            Geocoder geocoder;
-                            List<Address> addresses;
-                            geocoder = new Geocoder(SecondActivity.this, Locale.getDefault());
-
                             try {
-                                addresses = geocoder.getFromLocation(longitude, latitude, 1); // Here 1 represent max location result to returned, by documents it recommended 1 to 5
+                                double longitude = Double.parseDouble(components.get(3));
+                                double latitude = Double.parseDouble(components.get(4));
 
-                                String address = addresses.get(0).getAddressLine(0); // If any additional address line present than only, check with max available address lines by getMaxAddressLineIndex()
-                                String city = addresses.get(0).getLocality();
-                                String state = addresses.get(0).getAdminArea();
-                                String country = addresses.get(0).getCountryName();
-                                String postalCode = addresses.get(0).getPostalCode();
-                                String knownName = addresses.get(0).getFeatureName(); // Only if available else return NULL
+                                Geocoder geocoder;
+                                List<Address> addresses;
+                                geocoder = new Geocoder(SecondActivity.this, Locale.getDefault());
 
-                                activeLocations.add(address);
-                            } catch (Exception e) {
+                                try {
+                                    addresses = geocoder.getFromLocation(longitude, latitude, 1); // Here 1 represent max location result to returned, by documents it recommended 1 to 5
+
+                                    String address = addresses.get(0).getAddressLine(0); // If any additional address line present than only, check with max available address lines by getMaxAddressLineIndex()
+                                    String city = addresses.get(0).getLocality();
+                                    String state = addresses.get(0).getAdminArea();
+                                    String country = addresses.get(0).getCountryName();
+                                    String postalCode = addresses.get(0).getPostalCode();
+                                    String knownName = addresses.get(0).getFeatureName(); // Only if available else return NULL
+
+                                    activeLocations.add(address);
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+
+                                displayedLocations.add(location);
+                            }
+                            catch (Exception e) {
                                 e.printStackTrace();
                             }
-
-                            displayedLocations.add(location);
                         }
                     }
 
@@ -199,6 +235,43 @@ public class SecondActivity extends AppCompatActivity {
 
         });
 
+    }
+
+    String coordinates = "";
+
+    @Override
+    protected void onActivityResult(int requestCode,
+                                    int resultCode, Intent data) {
+
+        try {
+            if (requestCode == PLACE_PICKER_REQUEST
+                    && resultCode == Activity.RESULT_OK) {
+
+                final Place place = PlacePicker.getPlace(this, data);
+                final CharSequence name = place.getName();
+                final CharSequence address = place.getAddress();
+                String attributions = (String) place.getAttributions();
+                if (attributions == null) {
+                    attributions = "";
+                }
+
+                final LatLng coords = place.getLatLng();
+                coordinates = String.valueOf(coords.latitude) + " " + String.valueOf(coords.longitude);
+                Toaster.s(SecondActivity.this, coordinates);
+
+                edit();
+
+                //t.setText(address);
+                //mAddress.setText(address);
+                //mAttributions.setText(Html.fromHtml(attributions));
+
+            } else {
+                super.onActivityResult(requestCode, resultCode, data);
+            }
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public void info() {
@@ -290,9 +363,9 @@ public class SecondActivity extends AppCompatActivity {
             startService(i);
 
             Intent i2 = new Intent(SecondActivity.this, DataStorage.class);
-            i.putExtra("type", "location");
-            i.putExtra("action", "disable");
-            i.putExtra("data", displayedLocations.get(d.getSelectedItemPosition()));
+            i2.putExtra("type", "location");
+            i2.putExtra("action", "disable");
+            i2.putExtra("data", displayedLocations.get(d.getSelectedItemPosition()));
             startService(i2);
 
             s.setSelection(0);
@@ -337,5 +410,73 @@ public class SecondActivity extends AppCompatActivity {
             finish();
             startActivity(getIntent());
         }
+        else {
+            String s = displayedLocations.get(two.getSelectedItemPosition());
+            List<String> components = Arrays.asList(s.split("`"));
+            List<String> finalComponents = new ArrayList<>();
+
+            for (int i = 0; i < components.size(); i++) {
+                finalComponents.add(components.get(i));
+            }
+
+            List<String> coords = Arrays.asList(coordinates.split(" "));
+
+            finalComponents.set(3, coords.get(0));
+            finalComponents.set(4, coords.get(1));
+
+            String identifier = generateIdentifier();
+
+            String full = generateIdentifier() + "`" + finalComponents.get(1) + "`" + finalComponents.get(2) + "`" + finalComponents.get(3) + "`" + finalComponents.get(4) + "~";
+
+            Intent i = new Intent(SecondActivity.this, LocationCheck2.class);
+            i.putExtra("task", "remove");
+            i.putExtra("data", s);
+            startService(i);
+
+            Intent o = new Intent(SecondActivity.this, LocationCheck2.class);
+            o.putExtra("task", "add");
+            o.putExtra("data", full);
+            startService(o);
+
+            Intent e = new Intent(SecondActivity.this, DataStorage.class);
+            e.putExtra("type", "location");
+            e.putExtra("action", "disable");
+            e.putExtra("data", s);
+            startService(e);
+
+            SharedPreferences prefs = this.getSharedPreferences("com.doctorwho.ethan", Context.MODE_PRIVATE);
+            String identifierKey = "com.doctorwho.ethan.identifiers";
+            String identifiers = prefs.getString(identifierKey, "");
+            prefs.edit().putString(identifierKey, identifiers + (identifier + "-")).apply();
+
+            finish();
+            startActivity(getIntent());
+        }
+    }
+
+    char[] characters = new char[]{'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P' , 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
+    public String generateIdentifier() {
+        boolean confirmed = false;
+        String full = "";
+
+        while (!confirmed) {
+            for (int i = 0; i < 8; i++) {
+                full += characters[(int )(Math.random() * 62 + 0)];
+            }
+
+            SharedPreferences prefs = this.getSharedPreferences("com.doctorwho.ethan", Context.MODE_PRIVATE);
+            String dateTimeKey = "com.doctorwho.ethan.identifiers";
+            String identifiers = prefs.getString(dateTimeKey, "");
+
+            List identifierList = Arrays.asList(identifiers.split("-"));
+            if (identifierList.contains(full)) {
+                full = "";
+            }
+            else {
+                confirmed = true;
+            }
+        }
+
+        return full;
     }
 }

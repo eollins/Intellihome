@@ -28,6 +28,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import io.particle.android.sdk.cloud.ParticleCloudSDK;
+import io.particle.android.sdk.utils.Toaster;
 
 import static java.lang.System.in;
 
@@ -152,6 +153,13 @@ public class LocationCheck2 extends Service implements GoogleApiClient.Connectio
                 }
 
                 String rId = identifier + "~" + boardName + "~" + taskName + "~" + longitude + "~" + latitude;
+
+                try {
+                    double d = Double.parseDouble(latitude);
+                }
+                catch (Exception e) {
+                    return START_STICKY;
+                }
 
                 String identifierKey = "com.doctorwho.ethan.identifiers";
                 String identifiers = prefs.getString(identifierKey, "");
