@@ -91,6 +91,11 @@ public class GeofenceService extends IntentService {
 
                 String taskFull = taskName + ";";
 
+                Intent intent1 = new Intent(GeofenceService.this, SendNotification.class);
+                intent1.putExtra("title", "Location Task Success");
+                intent1.putExtra("text", taskName + " was executed successfully.");
+                startService(intent1);
+
                 try {
                     ParticleCloudSDK.getCloud().publishEvent(boardName, taskFull, ParticleEventVisibility.PRIVATE, 60);
                 } catch (ParticleCloudException e) {

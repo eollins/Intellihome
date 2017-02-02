@@ -9,6 +9,7 @@ import android.content.SharedPreferences;
 import android.icu.util.Calendar;
 import android.os.AsyncTask;
 import android.os.IBinder;
+import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
 import com.google.android.gms.location.Geofence;
@@ -72,6 +73,11 @@ public class TimeCheck extends Service {
                         o.putExtra("action", "remove");
                         o.putExtra("data", attributes.get(0) + "~" + attributes.get(1) + "~" + hour2 + ":" + minute2);
                         startService(o);
+
+                        Intent u = new Intent(TimeCheck.this, SendNotification.class);
+                        u.putExtra("title", "Timed Task Success");
+                        u.putExtra("text", attributes.get(1) + " was executed successfully.");
+                        startService(u);
                     }
                 }
             }

@@ -2,6 +2,8 @@ package doctorwho.ethan.purplemorocco;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.app.TimePickerDialog;
 import android.content.Context;
@@ -16,6 +18,8 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.provider.ContactsContract;
 import android.support.annotation.NonNull;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AlertDialog;
@@ -635,6 +639,10 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return full;
+    }
+
+    public void sendNotification(String title, String text) {
+
     }
 }
 

@@ -63,7 +63,11 @@
             android:exported="true" />
 
         <activity android:name=".Options" />
-        <activity android:name=".Boards"></activity>
+        <activity android:name=".Boards" />
+
+        <service
+            android:name=".SendNotification"
+            android:exported="false"></service>
     </application>
 
 </manifest>
