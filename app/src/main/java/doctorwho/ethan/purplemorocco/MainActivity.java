@@ -54,6 +54,7 @@ import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.vision.barcode.Barcode;
 import com.google.common.io.Files;
 
+import org.joda.time.DateTime;
 import org.w3c.dom.Text;
 
 import java.io.File;
@@ -134,6 +135,9 @@ public class MainActivity extends AppCompatActivity {
         ArrayAdapter<String> sa = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, options);
         s.setAdapter(sa);
         sa.notifyDataSetChanged();
+
+        secondSubscription ss = new secondSubscription();
+        ss.execute();
 
         Intent i= new Intent(this, LocationCheck2.class);
         this.startService(i);
@@ -536,6 +540,63 @@ public class MainActivity extends AppCompatActivity {
                                 Log.e("some tag", "Event error: ", e);
                             }
                         });
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            return null;
+        }
+    }
+
+    private class secondSubscription extends AsyncTask<String, Void, String> {
+        @Override
+        protected String doInBackground(String... params) {
+            long subscriptionId;
+            try {
+                subscriptionId = ParticleCloudSDK.getCloud().subscribeToAllEvents("mainBoard:status", new ParticleEventHandler() {
+                    @Override
+                    public void onEvent(String eventName, ParticleEvent particleEvent) {
+                        String info = particleEvent.dataPayload;
+
+                        List<String> components = Arrays.asList(info.split("~"));
+                        String boardName = components.get(0);
+                        String taskName = components.get(1);
+                        String time = components.get(2);
+                        String status = components.get(3);
+
+                        List<String> timeComponents = Arrays.asList(time.split(":"));
+                        if (Integer.parseInt(timeComponents.get(0)) > 7) {
+                            int hour = Integer.parseInt(timeComponents.get(0));
+                            hour -= 7;
+                            timeComponents.set(0, String.valueOf(hour));
+                        }
+                        else {
+                            int hour = Integer.parseInt(timeComponents.get(0));
+                            hour = 24 - (8 - hour);
+                            timeComponents.set(0, String.valueOf(hour));
+                        }
+
+                        Intent i = new Intent(MainActivity.this, SendNotification.class);
+
+                        if (status.equals("success")) {
+                            i.putExtra("title", "Successful Task");
+                            i.putExtra("text", boardName + "'s task " + taskName + " was completed at " + timeComponents.get(0) + ":" + timeComponents.get(1) + ".");
+                        }
+                        else {
+                            i.putExtra("title", "Task Failure");
+                            i.putExtra("text", boardName + "'s task " + taskName + " failed.");
+                        }
+
+                        startService(i);
+
+                        //sample payload: Purple_Morocco:LED On:0:00:success
+                    }
+
+                    @Override
+                    public void onEventError(Exception e) {
+
+                    }
+                });
             } catch (IOException e) {
                 e.printStackTrace();
             }
