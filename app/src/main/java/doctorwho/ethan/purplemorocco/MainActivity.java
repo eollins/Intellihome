@@ -581,6 +581,7 @@ public class MainActivity extends AppCompatActivity {
                         if (status.equals("success")) {
                             i.putExtra("title", "Successful Task");
                             i.putExtra("text", boardName + "'s task " + taskName + " was completed at " + timeComponents.get(0) + ":" + timeComponents.get(1) + ".");
+                            //i.putExtra("text", "this is a test.\ni am at a new line");
                         }
                         else {
                             i.putExtra("title", "Task Failure");
