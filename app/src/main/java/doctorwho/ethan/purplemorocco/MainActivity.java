@@ -18,6 +18,8 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.provider.ContactsContract;
 import android.support.annotation.NonNull;
+import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.content.ContextCompat;
@@ -26,9 +28,12 @@ import android.support.v7.app.AlertDialog;
 import
 android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
 import android.text.Html;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
 import android.widget.AdapterView;
@@ -124,11 +129,17 @@ public class MainActivity extends AppCompatActivity {
         boards.add("Select a board");
         newTasks.add("Select a task");
 
+//        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        //setSupportActionBar(toolbar);
+
         registerTasks();
 
         Spinner dropdown3 = (Spinner)findViewById(R.id.boardSpinner);
         ArrayAdapter<String> adp = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, boards);
         dropdown3.setAdapter(adp);
+
+        thirdSubscription ts = new thirdSubscription();
+        ts.execute();
 
         Spinner s = (Spinner)findViewById(R.id.spinner);
         String[] options = new String[]{"Run Immediately", "Run at Time", "Run at Location" };
@@ -606,6 +617,41 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    int nadf = 0;
+    private class thirdSubscription extends AsyncTask<String, Void, String> {
+
+        @Override
+        protected String doInBackground(String... params) {
+            try {
+                ParticleCloudSDK.getCloud().subscribeToAllEvents("mainBoard:information", new ParticleEventHandler() {
+                    @Override
+                    public void onEvent(String eventName, ParticleEvent particleEvent) {
+                        String data = particleEvent.dataPayload;
+                        List<String> info = Arrays.asList(data.split("~"));
+
+                        Intent i = new Intent(MainActivity.this, SendNotification.class);
+                        i.putExtra("title", "Task Information");
+                        i.putExtra("text", info.get(nadf));
+                        startService(i);
+                    }
+
+                    @Override
+                    public void onEventError(Exception e) {
+
+                    }
+                });
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            return null;
+        }
+    }
+
+    public void popup(String title, String text) {
+
+    }
+
     private class sendTask extends AsyncTask<String, Void, String> {
         @Override
         protected String doInBackground(String... params) {
@@ -659,6 +705,29 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            information();
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+
     private class registerTasks extends AsyncTask<String, Void, String> {
         @Override
         protected String doInBackground(String... params) {
@@ -705,6 +774,37 @@ public class MainActivity extends AppCompatActivity {
 
     public void sendNotification(String title, String text) {
 
+    }
+
+    String s;
+    String p;
+    public void information() {
+        Spinner boardSpinner = (Spinner)findViewById(R.id.boardSpinner);
+        String str = boards.get(boardSpinner.getSelectedItemPosition());
+        String str2 = str.substring(str.indexOf("-") + 1);
+        s = str2;
+
+        Spinner taskSpinner = (Spinner)findViewById(R.id.taskSpinner);
+        p = taskSpinner.getSelectedItem().toString();
+
+        nadf = taskSpinner.getSelectedItemPosition();
+
+        infoRequest in = new infoRequest();
+        in.execute();
+    }
+
+    private class infoRequest extends AsyncTask<String, Void, String> {
+
+        @Override
+        protected String doInBackground(String... params) {
+            try {
+                ParticleCloudSDK.getCloud().publishEvent(s + ":infoRequest", p, ParticleEventVisibility.PRIVATE, 60);
+            } catch (ParticleCloudException e) {
+                e.printStackTrace();
+            }
+
+            return null;
+        }
     }
 }
 
