@@ -153,6 +153,9 @@ public class MainActivity extends AppCompatActivity {
         Intent i= new Intent(this, LocationCheck2.class);
         this.startService(i);
 
+        Intent i9 = new Intent(this, NotificationReceiver.class);
+        startService(i9);
+
 //        Intent r = new Intent(MainActivity.this, DataStorage.class);
 //        r.putExtra("type", "location");
 //        r.putExtra("action", "clear");
@@ -648,9 +651,38 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private class fourthSubscription extends AsyncTask<String, Void, String> {
+
+        @Override
+        protected String doInBackground(String... params) {
+            try {
+                ParticleCloudSDK.getCloud().subscribeToAllEvents("mainBoard:notification", new ParticleEventHandler() {
+                    @Override
+                    public void onEvent(String eventName, ParticleEvent particleEvent) {
+                        List<String> info = Arrays.asList(particleEvent.dataPayload.split("~"));
+
+                        Intent i = new Intent(MainActivity.this, SendNotification.class);
+                        i.putExtra("title", info.get(0));
+                        i.putExtra("text", info.get(1));
+                        startService(i);
+                    }
+
+                    @Override
+                    public void onEventError(Exception e) {
+
+                    }
+                });
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+    }
+
     public void popup(String title, String text) {
 
     }
+
 
     private class sendTask extends AsyncTask<String, Void, String> {
         @Override
