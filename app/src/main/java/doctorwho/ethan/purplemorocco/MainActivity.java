@@ -724,6 +724,11 @@ public class MainActivity extends AppCompatActivity {
             information();
         }
 
+        if (id == R.id.action_settings3) {
+            Intent i = new Intent(MainActivity.this, doctorwho.ethan.purplemorocco.Log.class);
+            startActivity(i);
+        }
+
         return super.onOptionsItemSelected(item);
     }
 

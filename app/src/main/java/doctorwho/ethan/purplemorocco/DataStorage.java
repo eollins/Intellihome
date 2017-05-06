@@ -100,6 +100,14 @@ public class DataStorage extends IntentService {
                     prefs.edit().putString(identifierKey, identifiers);
                 }
             }
+            else if (type.equals("log")) {
+                if (action.equals("append")) {
+
+                }
+                else if (action.equals("clear")) {
+                    
+                }
+            }
         }
         catch (Exception e) {
             e.printStackTrace();
