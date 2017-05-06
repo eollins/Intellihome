@@ -70,16 +70,12 @@
             android:name=".SendNotification"
             android:exported="false" />
 
-<<<<<<< HEAD
-
-=======
         <activity android:name=".Repeat" />
 
         <service
             android:name=".NotificationReceiver"
             android:enabled="true"
             android:exported="true"></service>
->>>>>>> a016932554b7f0ca49052def12f4710770ecbbf7
     </application>
 
 </manifest>

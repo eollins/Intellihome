@@ -20,6 +20,7 @@ import android.provider.ContactsContract;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.content.ContextCompat;
@@ -97,6 +98,8 @@ public class MainActivity extends AppCompatActivity {
     int sHour = 0;
     int sMinute = 0;
 
+    boolean canAccessLocation = false;
+
     List<String> tasks = new ArrayList<String>();
     List<String> newTasks = new ArrayList<String>();
 
@@ -156,6 +159,10 @@ public class MainActivity extends AppCompatActivity {
         Intent i9 = new Intent(this, NotificationReceiver.class);
         startService(i9);
 
+        ActivityCompat.requestPermissions(MainActivity.this,
+                new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                2);
+
 //        Intent r = new Intent(MainActivity.this, DataStorage.class);
 //        r.putExtra("type", "location");
 //        r.putExtra("action", "clear");
@@ -183,6 +190,14 @@ public class MainActivity extends AppCompatActivity {
                 else if (position == 2) {
                     Button b = (Button)findViewById(R.id.select);
                     b.setVisibility(View.VISIBLE);
+
+                    if (canAccessLocation) {
+                        b.setEnabled(true);
+                    }
+                    else {
+                        b.setEnabled(false);
+                    }
+
                     b.setText("Select location");
 
                     TextView t = (TextView)findViewById(R.id.selection);
@@ -275,6 +290,58 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onDestroy() {
         super.onDestroy();
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case 1: {
+
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                    canAccessLocation = true;
+                } else {
+
+                    canAccessLocation = false;
+                    Toast.makeText(MainActivity.this, "Location functionality has been disabled.", Toast.LENGTH_SHORT).show();
+                }
+                return;
+            }
+            case 2: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                    canAccessLocation = true;
+                } else {
+
+                    canAccessLocation = false;
+                    Toast.makeText(MainActivity.this, "Location functionality has been disabled.", Toast.LENGTH_SHORT).show();
+                }
+                return;
+            }
+            case 3: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                    // permission was granted, yay! Do the
+                    // contacts-related task you need to do.
+                } else {
+
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+                    Toast.makeText(MainActivity.this, "Internet functionality has been disabled.", Toast.LENGTH_SHORT).show();
+                }
+                return;
+            }
+
+            // other 'case' lines to check for other
+            // permissions this app might request
+        }
     }
 
     public void optionsClick(View v) {
