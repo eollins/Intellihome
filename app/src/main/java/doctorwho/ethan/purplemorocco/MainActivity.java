@@ -14,6 +14,7 @@ import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.location.Geocoder;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.provider.ContactsContract;
@@ -47,6 +48,9 @@ import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
+import com.google.android.gms.appindexing.Action;
+import com.google.android.gms.appindexing.AppIndex;
+import com.google.android.gms.appindexing.Thing;
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
 import com.google.android.gms.common.GooglePlayServicesRepairableException;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -80,6 +84,7 @@ import java.util.Random;
 
 import io.particle.android.sdk.cloud.ParticleCloudException;
 import io.particle.android.sdk.cloud.ParticleCloudSDK;
+import io.particle.android.sdk.cloud.ParticleDevice;
 import io.particle.android.sdk.cloud.ParticleEvent;
 import io.particle.android.sdk.cloud.ParticleEventHandler;
 import io.particle.android.sdk.cloud.ParticleEventVisibility;
@@ -111,6 +116,11 @@ public class MainActivity extends AppCompatActivity {
     Spinner dropdown = null;
 
     String coordinates = "";
+    /**
+     * ATTENTION: This was auto-generated to implement the App Indexing API.
+     * See https://g.co/AppIndexing/AndroidStudio for more information.
+     */
+    private GoogleApiClient client;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -137,15 +147,15 @@ public class MainActivity extends AppCompatActivity {
 
         registerTasks();
 
-        Spinner dropdown3 = (Spinner)findViewById(R.id.boardSpinner);
+        Spinner dropdown3 = (Spinner) findViewById(R.id.boardSpinner);
         ArrayAdapter<String> adp = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, boards);
         dropdown3.setAdapter(adp);
 
         thirdSubscription ts = new thirdSubscription();
         ts.execute();
 
-        Spinner s = (Spinner)findViewById(R.id.spinner);
-        String[] options = new String[]{"Run Immediately", "Run at Time", "Run at Location" };
+        Spinner s = (Spinner) findViewById(R.id.spinner);
+        String[] options = new String[]{"Run Immediately", "Run at Time", "Run at Location"};
         ArrayAdapter<String> sa = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, options);
         s.setAdapter(sa);
         sa.notifyDataSetChanged();
@@ -153,7 +163,7 @@ public class MainActivity extends AppCompatActivity {
         secondSubscription ss = new secondSubscription();
         ss.execute();
 
-        Intent i= new Intent(this, LocationCheck2.class);
+        Intent i = new Intent(this, LocationCheck2.class);
         this.startService(i);
 
         Intent i9 = new Intent(this, NotificationReceiver.class);
@@ -172,35 +182,32 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
                 if (position == 0) {
-                    Button b = (Button)findViewById(R.id.select);
+                    Button b = (Button) findViewById(R.id.select);
                     b.setVisibility(View.INVISIBLE);
 
-                    TextView t = (TextView)findViewById(R.id.selection);
+                    TextView t = (TextView) findViewById(R.id.selection);
                     t.setVisibility(View.INVISIBLE);
-                }
-                else if (position == 1) {
-                    Button b = (Button)findViewById(R.id.select);
+                } else if (position == 1) {
+                    Button b = (Button) findViewById(R.id.select);
                     b.setVisibility(View.VISIBLE);
                     b.setText("Select time");
 
-                    TextView t = (TextView)findViewById(R.id.selection);
+                    TextView t = (TextView) findViewById(R.id.selection);
                     t.setVisibility(View.VISIBLE);
                     t.setText("12:00 AM");
-                }
-                else if (position == 2) {
-                    Button b = (Button)findViewById(R.id.select);
+                } else if (position == 2) {
+                    Button b = (Button) findViewById(R.id.select);
                     b.setVisibility(View.VISIBLE);
 
                     if (canAccessLocation) {
                         b.setEnabled(true);
-                    }
-                    else {
+                    } else {
                         b.setEnabled(false);
                     }
 
                     b.setText("Select location");
 
-                    TextView t = (TextView)findViewById(R.id.selection);
+                    TextView t = (TextView) findViewById(R.id.selection);
                     t.setVisibility(View.VISIBLE);
                     t.setText("");
                 }
@@ -212,9 +219,9 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        final Button send = (Button)findViewById(R.id.button3);
+        final Button send = (Button) findViewById(R.id.button3);
 
-        Button btn = (Button)findViewById(R.id.button4);
+        Button btn = (Button) findViewById(R.id.button4);
         btn.setOnClickListener(new View.OnClickListener() {
 
             @Override
@@ -244,7 +251,7 @@ public class MainActivity extends AppCompatActivity {
 //            newBoards.add(s2);
 //        }
 
-        final Spinner dropdown6 = (Spinner)findViewById(R.id.boardSpinner);
+        final Spinner dropdown6 = (Spinner) findViewById(R.id.boardSpinner);
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, boards);
         dropdown6.setAdapter(adapter);
 
@@ -256,8 +263,7 @@ public class MainActivity extends AppCompatActivity {
 
                 if (position == 0) {
                     send.setEnabled(false);
-                }
-                else {
+                } else {
                     send.setEnabled(true);
                 }
             }
@@ -269,7 +275,7 @@ public class MainActivity extends AppCompatActivity {
 
         });
 
-        final Spinner dropdown2 = (Spinner)findViewById(R.id.taskSpinner);
+        final Spinner dropdown2 = (Spinner) findViewById(R.id.taskSpinner);
         ArrayAdapter<String> adapter2 = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, newTasks);
         dropdown2.setAdapter(adapter2);
 
@@ -285,6 +291,9 @@ public class MainActivity extends AppCompatActivity {
             }
 
         });
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
     }
 
     @Override
@@ -350,7 +359,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void selectCondition(View v) {
-        Button b = (Button)findViewById(R.id.select);
+        Button b = (Button) findViewById(R.id.select);
 
         if (b.getText() == "Select time") {
             Calendar mcurrentTime = Calendar.getInstance();
@@ -377,8 +386,7 @@ public class MainActivity extends AppCompatActivity {
                         }
 
                         full = two + ":" + three + " PM";
-                    }
-                    else {
+                    } else {
                         int two = sHour;
                         String three = Integer.toString(sMinute);
                         if (sHour == 0) {
@@ -392,14 +400,13 @@ public class MainActivity extends AppCompatActivity {
                         full = two + ":" + three + " AM";
                     }
 
-                    TextView t = (TextView)findViewById(R.id.selection);
+                    TextView t = (TextView) findViewById(R.id.selection);
                     t.setText(full);
                 }
             }, hour, minute, false);
             mTimePicker.setTitle("");
             mTimePicker.show();
-        }
-        else if (b.getText() == "Select location") {
+        } else if (b.getText() == "Select location") {
             try {
                 PlacePicker.IntentBuilder intentBuilder =
                         new PlacePicker.IntentBuilder();
@@ -423,10 +430,21 @@ public class MainActivity extends AppCompatActivity {
 
         registerTasks();
 
-        Spinner dropdown3 = (Spinner)findViewById(R.id.boardSpinner);
+        Spinner dropdown3 = (Spinner) findViewById(R.id.boardSpinner);
+
+        List<String> allBoards = new ArrayList<>();
+        List<ParticleDevice> devices = null;
+        try {
+            devices = ParticleCloudSDK.getCloud().getDevices();
+        } catch (ParticleCloudException e) {
+            e.printStackTrace();
+        }
+        for (ParticleDevice device : devices) {
+            allBoards.add(device.getName());
+        }
 
         List<String> newBoards = new ArrayList<>();
-        for (Object s : boards) {
+        for (Object s : allBoards) {
             String s2 = s.toString();
             s2 = s2.substring(s2.indexOf("-") + 1);
             newBoards.add(s2);
@@ -441,6 +459,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     int type = 0;
+
     public void sendTask(View v) {
         new AlertDialog.Builder(this)
                 .setMessage("Are you sure you want to run this task?")
@@ -455,20 +474,19 @@ public class MainActivity extends AppCompatActivity {
     }
 
     String dataPhase1 = "";
-    public void sendCompleteTask() {
-        Spinner s = (Spinner)findViewById(R.id.spinner);
-        TextView t = (TextView)findViewById(R.id.selection);
 
-        Spinner boardSpinner = (Spinner)findViewById(R.id.boardSpinner);
-        Spinner taskSpinner = (Spinner)findViewById(R.id.taskSpinner);
+    public void sendCompleteTask() {
+        Spinner s = (Spinner) findViewById(R.id.spinner);
+        TextView t = (TextView) findViewById(R.id.selection);
+
+        Spinner boardSpinner = (Spinner) findViewById(R.id.boardSpinner);
+        Spinner taskSpinner = (Spinner) findViewById(R.id.taskSpinner);
 
         if (s.getSelectedItemPosition() == 0) {
             type = 0;
-        }
-        else if (s.getSelectedItemPosition() == 1) {
+        } else if (s.getSelectedItemPosition() == 1) {
             type = 1;
-        }
-        else {
+        } else {
             type = 2;
 
             String identifier = generateIdentifier();
@@ -479,13 +497,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void runNow(View v) {
-        CheckBox cb = (CheckBox)findViewById(R.id.checkBox);
+        CheckBox cb = (CheckBox) findViewById(R.id.checkBox);
 
-        Button b = (Button)findViewById(R.id.button4);
+        Button b = (Button) findViewById(R.id.button4);
         if (cb.isChecked()) {
             b.setEnabled(false);
-        }
-        else {
+        } else {
             b.setEnabled(true);
         }
     }
@@ -494,7 +511,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void updateTasks(int id) {
-        Spinner dropdown2 = (Spinner)findViewById(R.id.taskSpinner);
+        Spinner dropdown2 = (Spinner) findViewById(R.id.taskSpinner);
         List<String> allTasks = new ArrayList<String>();
 
         for (int i = 0; i < newTasks.size(); i++) {
@@ -551,7 +568,7 @@ public class MainActivity extends AppCompatActivity {
                 attributions = "";
             }
 
-            TextView t = (TextView)findViewById(R.id.selection);
+            TextView t = (TextView) findViewById(R.id.selection);
             t.setText(address);
 
             final LatLng coords = place.getLatLng();
@@ -582,12 +599,50 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * ATTENTION: This was auto-generated to implement the App Indexing API.
+     * See https://g.co/AppIndexing/AndroidStudio for more information.
+     */
+    public Action getIndexApiAction() {
+        Thing object = new Thing.Builder()
+                .setName("Main Page") // TODO: Define a title for the content shown.
+                // TODO: Make sure this auto-generated URL is correct.
+                .setUrl(Uri.parse("http://[ENTER-YOUR-URL-HERE]"))
+                .build();
+        return new Action.Builder(Action.TYPE_VIEW)
+                .setObject(object)
+                .setActionStatus(Action.STATUS_TYPE_COMPLETED)
+                .build();
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        client.connect();
+        AppIndex.AppIndexApi.start(client, getIndexApiAction());
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        AppIndex.AppIndexApi.end(client, getIndexApiAction());
+        client.disconnect();
+    }
+
     private class Login extends AsyncTask<String, Void, String> {
 
         @Override
         protected String doInBackground(String... params) {
             try {
                 ParticleCloudSDK.getCloud().logIn("ethanollins6@gmail.com", "33263326e");
+                log("Logged into Particle Cloud.");
+
             } catch (ParticleCloudException e) {
                 e.printStackTrace();
             }
@@ -621,6 +676,7 @@ public class MainActivity extends AppCompatActivity {
                                 Log.e("some tag", "Event error: ", e);
                             }
                         });
+                log("Subscribed to register events.");
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -650,8 +706,7 @@ public class MainActivity extends AppCompatActivity {
                             int hour = Integer.parseInt(timeComponents.get(0));
                             hour -= 7;
                             timeComponents.set(0, String.valueOf(hour));
-                        }
-                        else {
+                        } else {
                             int hour = Integer.parseInt(timeComponents.get(0));
                             hour = 24 - (8 - hour);
                             timeComponents.set(0, String.valueOf(hour));
@@ -663,8 +718,7 @@ public class MainActivity extends AppCompatActivity {
                             i.putExtra("title", "Successful Task");
                             i.putExtra("text", boardName + "'s task " + taskName + " was completed at " + timeComponents.get(0) + ":" + timeComponents.get(1) + ".");
                             //i.putExtra("text", "this is a test.\ni am at a new line");
-                        }
-                        else {
+                        } else {
                             i.putExtra("title", "Task Failure");
                             i.putExtra("text", boardName + "'s task " + taskName + " failed.");
                         }
@@ -682,12 +736,14 @@ public class MainActivity extends AppCompatActivity {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            log("Subscribed to status updates.");
 
             return null;
         }
     }
 
     int nadf = 0;
+
     private class thirdSubscription extends AsyncTask<String, Void, String> {
 
         @Override
@@ -703,6 +759,8 @@ public class MainActivity extends AppCompatActivity {
                         i.putExtra("title", "Task Information");
                         i.putExtra("text", info.get(nadf));
                         startService(i);
+
+                        log("Received information \"" + info.get(nadf) + "\" from board " + particleEvent.deviceId + " regarding task " + particleEvent.dataPayload);
                     }
 
                     @Override
@@ -714,6 +772,7 @@ public class MainActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
 
+            log("Subscribed to information responses.");
             return null;
         }
     }
@@ -732,6 +791,8 @@ public class MainActivity extends AppCompatActivity {
                         i.putExtra("title", info.get(0));
                         i.putExtra("text", info.get(1));
                         startService(i);
+
+                        log("Received notification \"" + info.get(1) + "\" from board " + particleEvent.deviceId);
                     }
 
                     @Override
@@ -739,6 +800,8 @@ public class MainActivity extends AppCompatActivity {
 
                     }
                 });
+
+                log("Subscribed to board notifications.");
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -755,12 +818,12 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected String doInBackground(String... params) {
             try {
-                CheckBox box = (CheckBox)findViewById(R.id.checkBox);
+                CheckBox box = (CheckBox) findViewById(R.id.checkBox);
 
                 if (type == 0) {
                     ParticleCloudSDK.getCloud().publishEvent(selectedBoard.substring(selectedBoard.indexOf('-') + 1), selectedTask.substring(selectedTask.indexOf('-') + 1) + ";", ParticleEventVisibility.PRIVATE, 60);
-                }
-                else if (type == 1) {
+                    log("Requested task " + selectedTask + " of board " + selectedBoard.substring(selectedBoard.indexOf('-') + 1) + " to run immediately.");
+                } else if (type == 1) {
                     Date dt = new Date();
                     List<String> timeData = Arrays.asList(dt.toString().split(" "));
                     List<String> components = Arrays.asList(timeData.get(3).split(":"));
@@ -772,13 +835,15 @@ public class MainActivity extends AppCompatActivity {
 
                     Intent i = new Intent(MainActivity.this, TimeCheck.class);
                     i.putExtra("task", "add");
+
+                    log("Requested task " + selectedTask.substring(Integer.parseInt(selectedTask.indexOf('-') + " of board " + selectedBoard.substring(selectedBoard.indexOf('-') + 1) + " to run at " + sHour + ":" + sMinute + ".")));
+
                     i.putExtra("boardName", selectedBoard.substring(selectedBoard.indexOf('-') + 1));
                     i.putExtra("taskName", selectedTask.substring(selectedTask.indexOf('-') + 1));
                     i.putExtra("time", sHour + ":" + sMinute);
                     startService(i);
 //                    ParticleCloudSDK.getCloud().publishEvent(selectedBoard.substring(selectedBoard.indexOf('-') + 1), (selectedTask.substring(selectedTask.indexOf('-') + 1) + ";" + sHour + ":" + sMinute), ParticleEventVisibility.PRIVATE, 60);
-                }
-                else {
+                } else {
                     String[] coords = coordinates.split(" ");
 
                     String lon = coords[0];
@@ -790,12 +855,13 @@ public class MainActivity extends AppCompatActivity {
                     i.putExtra("task", "add");
                     i.putExtra("data", dataToStore);
                     startService(i);
+
+                    log("Requested task " + selectedTask.substring(Integer.parseInt(selectedTask.indexOf('-') + " of board " + selectedBoard.substring(selectedBoard.indexOf('-') + 1) + " to run at " + lon + " " + lat + ".")));
                 }
 
             } catch (ParticleCloudException e) {
                 e.printStackTrace();
             }
-
             return "Requested";
         }
 
@@ -841,6 +907,8 @@ public class MainActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
 
+            log("Published a universal registration command.");
+
             return "wibbly wobbly timey wimey";
         }
 
@@ -850,14 +918,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    char[] characters = new char[]{'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P' , 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
+    char[] characters = new char[]{'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'};
+
     public String generateIdentifier() {
         boolean confirmed = false;
         String full = "";
 
         while (!confirmed) {
             for (int i = 0; i < 8; i++) {
-                full += characters[(int )(Math.random() * 62 + 0)];
+                full += characters[(int) (Math.random() * 62 + 0)];
             }
 
             SharedPreferences prefs = this.getSharedPreferences("com.doctorwho.ethan", Context.MODE_PRIVATE);
@@ -867,8 +936,7 @@ public class MainActivity extends AppCompatActivity {
             List identifierList = Arrays.asList(identifiers.split("-"));
             if (identifierList.contains(full)) {
                 full = "";
-            }
-            else {
+            } else {
                 confirmed = true;
             }
         }
@@ -882,13 +950,14 @@ public class MainActivity extends AppCompatActivity {
 
     String s;
     String p;
+
     public void information() {
-        Spinner boardSpinner = (Spinner)findViewById(R.id.boardSpinner);
+        Spinner boardSpinner = (Spinner) findViewById(R.id.boardSpinner);
         String str = boards.get(boardSpinner.getSelectedItemPosition());
         String str2 = str.substring(str.indexOf("-") + 1);
         s = str2;
 
-        Spinner taskSpinner = (Spinner)findViewById(R.id.taskSpinner);
+        Spinner taskSpinner = (Spinner) findViewById(R.id.taskSpinner);
         p = taskSpinner.getSelectedItem().toString();
 
         nadf = taskSpinner.getSelectedItemPosition();
@@ -903,12 +972,29 @@ public class MainActivity extends AppCompatActivity {
         protected String doInBackground(String... params) {
             try {
                 ParticleCloudSDK.getCloud().publishEvent(s + ":infoRequest", p, ParticleEventVisibility.PRIVATE, 60);
+
+                log("Published an information request to board " + s + "'s task " + p + ".");
             } catch (ParticleCloudException e) {
                 e.printStackTrace();
             }
 
             return null;
         }
+    }
+
+    public void log(String data) {
+        DateTime dt = DateTime.now();
+
+        String minute = String.valueOf(Calendar.getInstance().get(Calendar.MINUTE));
+        if (minute.length() == 1) {
+            minute = "0" + minute;
+        }
+
+        Intent i = new Intent(MainActivity.this, DataStorage.class);
+        i.putExtra("type", "log");
+        i.putExtra("action", "append");
+        i.putExtra("data", "[" + Calendar.getInstance().get(Calendar.HOUR) + ":" + minute + ":" + Calendar.getInstance().get(Calendar.SECOND) + " " + Calendar.getInstance().get(Calendar.MONTH) + "/" + Calendar.getInstance().get(Calendar.DAY_OF_MONTH) + "/" + Calendar.getInstance().get(Calendar.YEAR) + "] " + data + "~");
+        startService(i);
     }
 }
 

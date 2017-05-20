@@ -102,10 +102,14 @@ public class DataStorage extends IntentService {
             }
             else if (type.equals("log")) {
                 if (action.equals("append")) {
-
+                    String dateTimeKey = "com.doctorwho.ethan.log";
+                    String current = prefs.getString(dateTimeKey, "");
+                    prefs.edit().putString(dateTimeKey, current + data).apply();
                 }
                 else if (action.equals("clear")) {
-                    
+                    String dateTimeKey = "com.doctorwho.ethan.log";
+                    String locations = prefs.getString(dateTimeKey, "");
+                    prefs.edit().putString(dateTimeKey, "").apply();
                 }
             }
         }
