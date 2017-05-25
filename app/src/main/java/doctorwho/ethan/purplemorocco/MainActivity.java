@@ -13,6 +13,7 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
+import android.graphics.drawable.ColorDrawable;
 import android.location.Geocoder;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -107,6 +108,8 @@ public class MainActivity extends AppCompatActivity {
 
     List<String> tasks = new ArrayList<String>();
     List<String> newTasks = new ArrayList<String>();
+    List<String> allBoards = new ArrayList<>();
+    List<String> statuses = new ArrayList<>();
 
     String selectedBoard;
     String selectedTask;
@@ -147,9 +150,19 @@ public class MainActivity extends AppCompatActivity {
 
         registerTasks();
 
+        getDevices get = new getDevices();
+        get.execute();
+
         Spinner dropdown3 = (Spinner) findViewById(R.id.boardSpinner);
-        ArrayAdapter<String> adp = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, boards);
-        dropdown3.setAdapter(adp);
+
+        List<String> newBoards = new ArrayList<>();
+        newBoards.add("Select a board");
+        for (Object s : allBoards) {
+            newBoards.add(s.toString());
+        }
+
+        ArrayAdapter<String> adapt3er = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, newBoards);
+        dropdown3.setAdapter(adapt3er);
 
         thirdSubscription ts = new thirdSubscription();
         ts.execute();
@@ -252,14 +265,38 @@ public class MainActivity extends AppCompatActivity {
 //        }
 
         final Spinner dropdown6 = (Spinner) findViewById(R.id.boardSpinner);
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, boards);
-        dropdown6.setAdapter(adapter);
+
+        List<String> newBoards2 = new ArrayList<>();
+        newBoards2.add("Select a board");
+        for (Object s2 : allBoards) {
+            newBoards2.add(s2.toString());
+        }
+
+        ArrayAdapter<String> adapt5er = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, newBoards2);
+        dropdown6.setAdapter(adapt5er);
+
+        reload2();
 
         dropdown6.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
                 updateTasks(position - 1);
                 selectedBoard = dropdown6.getSelectedItem().toString();
+
+                try {
+                    if (statuses.get(position) == "true") {
+                        getSupportActionBar().setBackgroundDrawable(new ColorDrawable(getResources().getColor(R.color.online)));
+                    }
+                    if (statuses.get(position) == "false") {
+                        getSupportActionBar().setBackgroundDrawable(new ColorDrawable(getResources().getColor(R.color.offline)));
+                    }
+                    if (position == 0) {
+                        getSupportActionBar().setBackgroundDrawable(new ColorDrawable(getResources().getColor(R.color.black)));
+                    }
+                }
+                catch (Exception e) {
+                    e.printStackTrace();
+                }
 
                 if (position == 0) {
                     send.setEnabled(false);
@@ -432,22 +469,35 @@ public class MainActivity extends AppCompatActivity {
 
         Spinner dropdown3 = (Spinner) findViewById(R.id.boardSpinner);
 
-        List<String> allBoards = new ArrayList<>();
-        List<ParticleDevice> devices = null;
-        try {
-            devices = ParticleCloudSDK.getCloud().getDevices();
-        } catch (ParticleCloudException e) {
-            e.printStackTrace();
-        }
-        for (ParticleDevice device : devices) {
-            allBoards.add(device.getName());
+        List<String> newBoards = new ArrayList<>();
+        newBoards.add("Select a board");
+        for (Object s : allBoards) {
+            newBoards.add(s.toString());
         }
 
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, newBoards);
+        dropdown3.setAdapter(adapter);
+
+//        Spinner dropdown2 = (Spinner)findViewById(R.id.taskSpinner);
+//        ArrayAdapter<String> adapter2 = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, newTasks);
+//        dropdown2.setAdapter(adapter2);
+    }
+
+    public void reload2() {
+        boards.clear();
+        newTasks.clear();
+
+        boards.add("Select a board");
+        newTasks.add("Select a task");
+
+        registerTasks();
+
+        Spinner dropdown3 = (Spinner) findViewById(R.id.boardSpinner);
+
         List<String> newBoards = new ArrayList<>();
+        newBoards.add("Select a board");
         for (Object s : allBoards) {
-            String s2 = s.toString();
-            s2 = s2.substring(s2.indexOf("-") + 1);
-            newBoards.add(s2);
+            newBoards.add(s.toString());
         }
 
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, newBoards);
@@ -976,6 +1026,27 @@ public class MainActivity extends AppCompatActivity {
                 log("Published an information request to board " + s + "'s task " + p + ".");
             } catch (ParticleCloudException e) {
                 e.printStackTrace();
+            }
+
+            return null;
+        }
+    }
+
+    private class getDevices extends AsyncTask<String, Void, String> {
+        @Override
+        protected String doInBackground(String... params) {
+            allBoards.clear();
+            statuses.clear();
+
+            List<ParticleDevice> devices = new ArrayList<>();
+            try {
+                devices = ParticleCloudSDK.getCloud().getDevices();
+            } catch (ParticleCloudException e) {
+                e.printStackTrace();
+            }
+            for (ParticleDevice device : devices) {
+                allBoards.add(device.getName());
+                statuses.add(String.valueOf(device.isConnected()));
             }
 
             return null;
